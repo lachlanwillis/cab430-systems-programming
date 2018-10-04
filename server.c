@@ -1,14 +1,18 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/socket.h>
-#include <time.h>
-#include <sys/types.h>
-#include <string.h>
-#include <netinet/in.h>
-#include <pthread.h>
-#include <signal.h>
 #include <stdbool.h>
 
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <pthread.h>
+
+#include <string.h>
+
+#include <netinet/in.h>
+
+#include <signal.h>
+
+#include <time.h>
 #include <unistd.h>
 
 
@@ -46,6 +50,7 @@ void HandleExitSignal(int);
 int main(int argc, char* argv[]) {
 	// Random Number
 	srand(RANDOM_NUM_SEED);
+	char testMessage[256] = "Successfully connected to server";
 	// Uncomment once we have implemented HandleExitSignal
 	//signal(SIGINT, HandleExitSignal);
 
@@ -67,29 +72,38 @@ int main(int argc, char* argv[]) {
 
 
 	// Setup Server and client variables
-	int serverListen = 0, clientConnect = 0;
+	int serverListen, clientConnect;
 	serverListen = socket(AF_INET, SOCK_STREAM, 0);
 
 	// Setup Server Address
 	struct sockaddr_in serv_addr, client;
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_addr.s_addr = INADDR_ANY;
-	serv_addr.sin_port = portNum;
+	serv_addr.sin_port = htons(portNum);
 
 	// Bind config to server
 	bind(serverListen, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
 	int c = sizeof(struct sockaddr_in);
+
 	// Listen for X connections - currently 10
 	listen(serverListen, 10);
 
 	// Attempt a connection
-	while (clientConnect = accept(serverListen, (struct sockaddr *) &client, (socklen_t*)&c)){
+	clientConnect = accept(serverListen, (struct sockaddr *) &client, (socklen_t*)&c);
+
+	// Send test data
+	send(clientConnect, testMessage, sizeof(testMessage), 0);
+
+	close (serverListen);
+
 		// Create client multithread
 		/*
 		pthread_create(&tid, &attr, (void* (*) (void *)) ClientConnectionsHandler, (void * __restrict__) atoi(argv[1]));
 		pthread_join(tid, NULL); */
-	}
 
+
+
+	return 0;
 
 }
 
@@ -116,9 +130,15 @@ void PlaceMines(){
 		do {
 			x = rand() % NUM_TILES_X;
 			y = rand() % NUM_TILES_Y;
-		} while (tile_contains_mine(x,y));
+		} while (TileContainsMine(x,y));
 		*/
 	}
+}
+
+
+
+void TileContainsMine(int x, int y){
+
 }
 
 
