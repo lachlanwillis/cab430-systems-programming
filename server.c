@@ -5,17 +5,18 @@
 #include <sys/types.h>
 #include <string.h>
 #include <netinet/in.h>
-#include <pthreads.h>
+#include <pthread.h>
 #include <signal.h>
+#include <stdbool.h>
 
 #include <unistd.h>
 
 
-#define RANDOM_NUM_SEED 42;
+#define RANDOM_NUM_SEED 42
 
-#define NUM_TILES_X 9;
-#define NUM_TILES_Y 9;
-#define NUM_MINES 10;
+#define NUM_TILES_X 9
+#define NUM_TILES_Y 9
+#define NUM_MINES 10
 
 
 // Define what a tile is
@@ -30,24 +31,33 @@ typedef struct{
 
 typedef struct GameState{
 	// More here
-	Tile tiles[NUM_TILES_X, NUM_TILES_Y];
-}
+	Tile tiles[NUM_TILES_X] [NUM_TILES_Y];
+};
 
 
 
 void *ClientConnectionsHandler(void *);
+void PlaceMines();
+void HandleExitSignal(int);
 
 
 
 
 int main(int argc, char* argv[]) {
 	// Random Number
-	srand(RANDOM_NUM_SEED)
+	srand(RANDOM_NUM_SEED);
+	// Uncomment once we have implemented HandleExitSignal
+	//signal(SIGINT, HandleExitSignal);
 
-	signal(SIGINT, HandleExitSignal);
-	// Handle Given Port Connection
+	// Setup pthread
+	pthread_t tid;
+	pthread_attr_t attr;
+
+	fprintf(stderr, argv[1]);
+
+	// Handle Port Connection
 	int portNum;
-	if(argc < 1){
+	if(argc < 2){
 		fprintf(stderr, "%s\n", "ERROR, No String Provided!");
 		exit(1);
 	} else {
@@ -61,19 +71,24 @@ int main(int argc, char* argv[]) {
 	serverListen = socket(AF_INET, SOCK_STREAM, 0);
 
 	// Setup Server Address
-	struct sockaddr_in serv_addr;
+	struct sockaddr_in serv_addr, client;
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_addr.s_addr = INADDR_ANY;
 	serv_addr.sin_port = portNum;
 
 	// Bind config to server
 	bind(serverListen, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
-
+	int c = sizeof(struct sockaddr_in);
 	// Listen for X connections - currently 10
 	listen(serverListen, 10);
 
-
-	// Client Connections Without Multithreading
+	// Attempt a connection
+	while (clientConnect = accept(serverListen, (struct sockaddr *) &client, (socklen_t*)&c)){
+		// Create client multithread
+		/*
+		pthread_create(&tid, &attr, (void* (*) (void *)) ClientConnectionsHandler, (void * __restrict__) atoi(argv[1]));
+		pthread_join(tid, NULL); */
+	}
 
 
 }
@@ -85,6 +100,11 @@ int main(int argc, char* argv[]) {
 // Handle client connections
 void *ClientConnectionsHandler(void *serverListen){
 
+	// Prepare writing to client
+
+
+
+
 }
 
 
@@ -92,11 +112,12 @@ void *ClientConnectionsHandler(void *serverListen){
 void PlaceMines(){
 	for (int i = 0; i < NUM_MINES; i++){
 		int x, y;
+		/*
 		do {
 			x = rand() % NUM_TILES_X;
 			y = rand() % NUM_TILES_Y;
 		} while (tile_contains_mine(x,y));
-
+		*/
 	}
 }
 
