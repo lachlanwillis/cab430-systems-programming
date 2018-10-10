@@ -11,8 +11,8 @@ int main(int argc, char* argv[]){
   // Setup port and connection address
   int portNum, conAddr;
   if(argc < 3){
-    fprintf(stderr, "%s\n", "ERROR, No String Provided!");
-    exit(1);
+    fprintf(stderr, "%s\n", "No port provided - using default 12345");
+    portNum = 12345;
   } else {
     portNum = atoi(argv[2]);
     conAddr = gethostbyname(argv[1]);

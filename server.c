@@ -62,8 +62,8 @@ int main(int argc, char* argv[]) {
 	// Handle Port Connection
 	int portNum;
 	if(argc < 2){
-		fprintf(stderr, "%s\n", "ERROR, No String Provided!");
-		exit(1);
+		fprintf(stderr, "%s\n", "No Port Provided - using default 12345");
+		portNum = 12345;
 	} else {
 		portNum = atoi(argv[1]);
 	}
