@@ -43,6 +43,7 @@ typedef struct GameState{
 void *ClientConnectionsHandler(void *);
 void PlaceMines();
 void HandleExitSignal(int);
+void *ClientCommunicationHandler(int, char *[256]);
 
 
 
@@ -102,9 +103,6 @@ int main(int argc, char* argv[]) {
 
 	close (serverListen);
 
-		// Create client multithread
-		/*
-		 */
 
 
 
@@ -120,15 +118,26 @@ int main(int argc, char* argv[]) {
 void *ClientConnectionsHandler(void *serverListen){
 
 	// Prepare writing to client
-	char testMessage[256] = "Successfully connected to server";
-	int socket = *(int*) serverListen;
+	char message[256] = "Successfully connected to server";
+
 	puts("Successfully created thread");
-	write(socket, testMessage, sizeof(testMessage));
+	int socket = *(int*) serverListen;
+	puts("Writing to client");
+	//write(socket, message, sizeof(message));
+	ClientCommunicationHandler(socket, &message);
 
 
 
 
 }
+
+
+// Handle sending data to client
+void *ClientCommunicationHandler(int socket, char *message[256]){
+	write(socket, message, strlen(message) + 1);
+	return 0;
+}
+
 
 
 // Place mines
@@ -149,6 +158,9 @@ void PlaceMines(){
 void TileContainsMine(int x, int y){
 
 }
+
+
+
 
 
 // Need to implement signal handler to exit cleanly when ctrl+c is pressed

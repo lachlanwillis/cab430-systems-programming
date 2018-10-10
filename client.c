@@ -36,7 +36,6 @@ int main(int argc, char* argv[]){
 
   char testMessage[256];
   recv(clientConnect, &testMessage, sizeof(testMessage), 0);
-
   // print the data we got
   fprintf(stderr, "%s\n", testMessage);
 
