@@ -29,7 +29,7 @@ int main(int argc, char* argv[]){
 
   // Attempt to connect to the server
   int connectionStatus = connect(clientConnect, (struct sockaddr *) &serverAddress, sizeof(serverAddress));
-  if (connectionStatus = -1){
+  if (connectionStatus == -1){
     // Problem connecting to server
     fprintf(stderr, "%s\n", "There was a problem connecting to socket\n");
   }

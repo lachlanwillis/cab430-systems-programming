@@ -50,15 +50,13 @@ void HandleExitSignal(int);
 int main(int argc, char* argv[]) {
 	// Random Number
 	srand(RANDOM_NUM_SEED);
-	char testMessage[256] = "Successfully connected to server";
+
 	// Uncomment once we have implemented HandleExitSignal
 	//signal(SIGINT, HandleExitSignal);
 
 	// Setup pthread
 	pthread_t tid;
 	pthread_attr_t attr;
-
-	fprintf(stderr, argv[1]);
 
 	// Handle Port Connection
 	int portNum;
@@ -87,19 +85,26 @@ int main(int argc, char* argv[]) {
 
 	// Listen for X connections - currently 10
 	listen(serverListen, 10);
-
 	// Attempt a connection
-	clientConnect = accept(serverListen, (struct sockaddr *) &client, (socklen_t*)&c);
+	while(clientConnect = accept(serverListen, (struct sockaddr *) &client, (socklen_t*)&c)){
+		puts("Accepting connection");
+		if (pthread_create(&tid, NULL,  ClientConnectionsHandler, (void * __restrict__) &clientConnect)< 0){
+			return 1;
+		}
+		pthread_join(tid, NULL);
+		puts("Closing thread");
+
+	}
+	// Attempt a connection
 
 	// Send test data
-	send(clientConnect, testMessage, sizeof(testMessage), 0);
+
 
 	close (serverListen);
 
 		// Create client multithread
 		/*
-		pthread_create(&tid, &attr, (void* (*) (void *)) ClientConnectionsHandler, (void * __restrict__) atoi(argv[1]));
-		pthread_join(tid, NULL); */
+		 */
 
 
 
@@ -115,6 +120,10 @@ int main(int argc, char* argv[]) {
 void *ClientConnectionsHandler(void *serverListen){
 
 	// Prepare writing to client
+	char testMessage[256] = "Successfully connected to server";
+	int socket = *(int*) serverListen;
+	puts("Successfully created thread");
+	write(socket, testMessage, sizeof(testMessage));
 
 
 
