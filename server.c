@@ -9,6 +9,7 @@
 #include <string.h>
 
 #include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include <signal.h>
 
@@ -20,6 +21,8 @@
 #define NUM_TILES_X 9
 #define NUM_TILES_Y 9
 #define NUM_MINES 10
+
+#define TOTAL_CONNECTIONS 10
 
 // Define what a tile is
 typedef struct {
@@ -33,27 +36,28 @@ typedef struct {
 	Tile tiles[NUM_TILES_X] [NUM_TILES_Y];
 } GameState;
 
-void *ClientConnectionsHandler(void *);
+void ClientConnectionsHandler(int);
 void PlaceMines();
 void HandleExitSignal();
-void signal_handler(int signal);
-void *ClientCommunicationHandler(int, char *[256]);
+void ClientCommunicationHandler(int, char *[256]);
 
 // Setup server, client socket variables
-int serverListen, clientConnect;
+int serverListen, clientConnect, portNum;
+struct sockaddr_in serv_addr, client;
+socklen_t sin_size;
 
 // Setup pthread variables
-pthread_t tid;
+pthread_t client_thread;
 pthread_attr_t attr;
 
 int main(int argc, char* argv[]) {
-	int portNum;
-	struct sockaddr_in serv_addr, client;
-	int c = sizeof(struct sockaddr_in);
-
+	// Setup Handle Exit Signal
 	signal(SIGINT, HandleExitSignal);
+	signal(SIGKILL, HandleExitSignal);
+	signal(SIGQUIT, HandleExitSignal);
+	signal(SIGABRT, HandleExitSignal);
 
-	// Random Number
+	// Seed the random number
 	srand(RANDOM_NUM_SEED);
 
 	// Handle Port Connection
@@ -62,11 +66,15 @@ int main(int argc, char* argv[]) {
 		portNum = 12345;
 	} else {
 		portNum = atoi(argv[1]);
-		printf("Port Provided - using %d", portNum);
+		printf("Port Provided - using %d\n", portNum);
 	}
 
-	// Setup server socket
-	serverListen = socket(AF_INET, SOCK_STREAM, 0);
+	// Generate server socket
+	if ((serverListen = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+		perror("socket");
+		exit(1);
+	}
+	printf("Generated server socket\n");
 
 	// Setup Server Address
 	serv_addr.sin_family = AF_INET;
@@ -74,22 +82,36 @@ int main(int argc, char* argv[]) {
 	serv_addr.sin_port = htons(portNum);
 
 	// Bind config to server
-	bind(serverListen, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
+	if ((bind(serverListen, (struct sockaddr *)&serv_addr, sizeof(serv_addr))) == -1) {
+		perror("bind");
+		exit(1);
+	}
+	printf("Bound configuration to server\n");
 
-	// Listen for X connections - currently 10
-	listen(serverListen, 10);
-	
-	// Attempt a connection
-	while ((clientConnect = accept(serverListen, (struct sockaddr *) &client, (socklen_t*)&c))) {
-		puts("Accepting connection");
-		if (pthread_create(&tid, NULL, ClientConnectionsHandler, (void * __restrict__) & clientConnect) < 0){
-			return 1;
+	// Start listening
+	if ((listen(serverListen, TOTAL_CONNECTIONS)) == -1) {
+		perror("listen");
+		exit(1);
+	}
+	printf("Server started listnening...\n");
+
+	while(1) {
+		sin_size = sizeof(struct sockaddr_in);
+		if((clientConnect = accept(serverListen, (struct sockaddr *) &client, &sin_size)) == -1) {
+			perror("accept");
+			continue;
 		}
-		pthread_join(tid, NULL);
-		puts("Closing thread");
+		printf("Server: received connection from %s\n", inet_ntoa(client.sin_addr));
+
+		// Create a thread to accept client	
+		pthread_attr_t attr;
+		pthread_attr_init(&attr);
+		pthread_create(&client_thread, &attr, ClientConnectionsHandler, clientConnect);
+
+		pthread_join(client_thread, NULL);
 	}
 
-	return 0;
+	close(clientConnect);
 }
 
 // Handles Exiting on CTRL-C
@@ -101,30 +123,24 @@ void HandleExitSignal() {
 
 	// Kill threads and exit program
 	printf("Killing threads, exiting program...\n");
-	pthread_exit(&tid);
+	pthread_exit(&client_thread);
 
 	// Exit program
 	exit(0);
 }
 
 // Handle client connections
-void *ClientConnectionsHandler(void *serverListen) {
+void ClientConnectionsHandler(int clientSocket) {
 	// Prepare writing to client
 	char message[256] = "Successfully connected to server";
+	send(clientSocket, &message, sizeof(message), 0);
 
-	puts("Successfully created thread");
-	int socket = *(int*) serverListen;
-	puts("Writing to client");
-	ClientCommunicationHandler(socket, (char **)message);
-
-	return 0;
+	// ClientCommunicationHandler(clientSocket, (char **)message);
 }
 
 // Handle sending data to client
-void *ClientCommunicationHandler(int socket, char *message[256]) {
-	write(socket, message, strlen(*message) + 1);
-
-	return 0;
+void ClientCommunicationHandler(int client_socket, char *message[256]) {
+	send(socket, &message, strlen(*message) + 1, 0);
 }
 
 // Place mines
