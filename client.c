@@ -18,7 +18,6 @@ int main(int argc, char* argv[]){
     conAddr = gethostbyname(argv[1]);
   }
 
-
   // Setup the client connection
   int clientConnect = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -43,5 +42,4 @@ int main(int argc, char* argv[]){
   close(clientConnect);
 
   return 0;
-
 }

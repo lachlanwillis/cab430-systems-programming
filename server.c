@@ -15,13 +15,11 @@
 #include <time.h>
 #include <unistd.h>
 
-
 #define RANDOM_NUM_SEED 42
 
 #define NUM_TILES_X 9
 #define NUM_TILES_Y 9
 #define NUM_MINES 10
-
 
 // Define what a tile is
 typedef struct{
@@ -30,30 +28,21 @@ typedef struct{
 	bool is_mine;
 } Tile;
 
-
-
-
 typedef struct GameState{
 	// More here
 	Tile tiles[NUM_TILES_X] [NUM_TILES_Y];
 };
-
-
 
 void *ClientConnectionsHandler(void *);
 void PlaceMines();
 void HandleExitSignal(int);
 void *ClientCommunicationHandler(int, char *[256]);
 
-
-
-
 int main(int argc, char* argv[]) {
 	// Random Number
 	srand(RANDOM_NUM_SEED);
 
-	// Uncomment once we have implemented HandleExitSignal
-	//signal(SIGINT, HandleExitSignal);
+	signal(SIGINT, HandleExitSignal);
 
 	// Setup pthread
 	pthread_t tid;
@@ -67,8 +56,6 @@ int main(int argc, char* argv[]) {
 	} else {
 		portNum = atoi(argv[1]);
 	}
-
-
 
 	// Setup Server and client variables
 	int serverListen, clientConnect;
@@ -99,24 +86,13 @@ int main(int argc, char* argv[]) {
 	// Attempt a connection
 
 	// Send test data
-
-
 	close (serverListen);
 
-
-
-
 	return 0;
-
 }
-
-
-
-
 
 // Handle client connections
 void *ClientConnectionsHandler(void *serverListen){
-
 	// Prepare writing to client
 	char message[256] = "Successfully connected to server";
 
@@ -125,20 +101,13 @@ void *ClientConnectionsHandler(void *serverListen){
 	puts("Writing to client");
 	//write(socket, message, sizeof(message));
 	ClientCommunicationHandler(socket, &message);
-
-
-
-
 }
-
 
 // Handle sending data to client
 void *ClientCommunicationHandler(int socket, char *message[256]){
 	write(socket, message, strlen(message) + 1);
 	return 0;
 }
-
-
 
 // Place mines
 void PlaceMines(){
@@ -153,17 +122,12 @@ void PlaceMines(){
 	}
 }
 
-
-
 void TileContainsMine(int x, int y){
 
 }
 
-
-
-
-
 // Need to implement signal handler to exit cleanly when ctrl+c is pressed
 void HandleExitSignal(int signal){
-	// Exit code goes here.
+	printf("\nExiting Program... Killing Process: %d\n",getpid());
+	exit(0);
 }
