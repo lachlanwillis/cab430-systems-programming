@@ -64,6 +64,13 @@ int main(int argc, char* argv[]){
   // print the data we got
   fprintf(stderr, "%s\n", buf);
 
+  fprintf(stderr, "=================================================================\n");
+  fprintf(stderr, "Welcome to the online Minesweeper gaming system\n");
+  fprintf(stderr, "=================================================================\n\n");
+
+  fprintf(stderr, "You are required to log on with your registered name and password:\n\n");
+  fprintf(stderr, "Username: "); //Add read input
+
   while(1) {};
 
   // Close connection
