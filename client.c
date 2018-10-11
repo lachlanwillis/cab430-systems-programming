@@ -9,13 +9,23 @@
 
 int main(int argc, char* argv[]){
   // Setup port and connection address
-  int portNum, conAddr;
-  if(argc < 3){
-    fprintf(stderr, "%s\n", "No port provided - using default 12345");
+  int portNum;
+  char * inetAddr;
+
+  if (argc == 3) {
+    // User provided IP and Port
+    portNum = (unsigned short) atoi(argv[2]);
+    inetAddr = argv[1];
+
+    printf("IP and Port Provided - using %s:%d", inetAddr, portNum);
+  } else if (argc == 1) {
+    // User did not provide any information - use defaults
+    fprintf(stderr, "%s\n", "No IP and Port provided - using default localhost:12345");
     portNum = 12345;
   } else {
-    portNum = atoi(argv[2]);
-    conAddr = gethostbyname(argv[1]);
+    // Error in provided information
+    printf("Usage: %s hostname port -OR- %s", argv[0], argv[0]);
+    exit(1);
   }
 
   // Setup the client connection
@@ -24,7 +34,7 @@ int main(int argc, char* argv[]){
   struct sockaddr_in  serverAddress;
   serverAddress.sin_family = AF_INET;
   serverAddress.sin_port= htons(portNum);
-  serverAddress.sin_addr.s_addr = INADDR_ANY;
+  serverAddress.sin_addr.s_addr = inet_addr(argv[1]);
 
   // Attempt to connect to the server
   int connectionStatus = connect(clientConnect, (struct sockaddr *) &serverAddress, sizeof(serverAddress));

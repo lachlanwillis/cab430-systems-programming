@@ -55,6 +55,7 @@ int main(int argc, char* argv[]) {
 		portNum = 12345;
 	} else {
 		portNum = atoi(argv[1]);
+		printf("Port Provided - using %d", portNum);
 	}
 
 	// Setup Server and client variables
@@ -73,6 +74,7 @@ int main(int argc, char* argv[]) {
 
 	// Listen for X connections - currently 10
 	listen(serverListen, 10);
+	
 	// Attempt a connection
 	while(clientConnect = accept(serverListen, (struct sockaddr *) &client, (socklen_t*)&c)){
 		puts("Accepting connection");
@@ -81,9 +83,7 @@ int main(int argc, char* argv[]) {
 		}
 		pthread_join(tid, NULL);
 		puts("Closing thread");
-
 	}
-	// Attempt a connection
 
 	// Send test data
 	close (serverListen);
@@ -126,7 +126,7 @@ void TileContainsMine(int x, int y){
 
 }
 
-// Need to implement signal handler to exit cleanly when ctrl+c is pressed
+// Handles Exiting on CTRL-C
 void HandleExitSignal(int signal){
 	printf("\nExiting Program... Killing Process: %d\n",getpid());
 	exit(0);
