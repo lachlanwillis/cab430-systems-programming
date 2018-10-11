@@ -20,8 +20,10 @@ int main(int argc, char* argv[]){
     printf("IP and Port Provided - using %s:%d", inetAddr, portNum);
   } else if (argc == 1) {
     // User did not provide any information - use defaults
-    fprintf(stderr, "%s\n", "No IP and Port provided - using default localhost:12345");
     portNum = 12345;
+    inetAddr = "127.0.0.1";
+
+    fprintf(stderr, "%s\n", "No IP and Port provided - using default localhost:12345");
   } else {
     // Error in provided information
     printf("Usage: %s hostname port -OR- %s", argv[0], argv[0]);
@@ -34,7 +36,7 @@ int main(int argc, char* argv[]){
   struct sockaddr_in  serverAddress;
   serverAddress.sin_family = AF_INET;
   serverAddress.sin_port= htons(portNum);
-  serverAddress.sin_addr.s_addr = inet_addr(argv[1]);
+  serverAddress.sin_addr.s_addr = inet_addr(inetAddr);
 
   // Attempt to connect to the server
   int connectionStatus = connect(clientConnect, (struct sockaddr *) &serverAddress, sizeof(serverAddress));

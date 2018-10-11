@@ -22,35 +22,42 @@
 #define NUM_MINES 10
 
 // Define what a tile is
-typedef struct{
+typedef struct {
 	int adjacent_mines;
 	bool revealed;
 	bool is_mine;
 } Tile;
 
-typedef struct GameState{
+typedef struct {
 	// More here
 	Tile tiles[NUM_TILES_X] [NUM_TILES_Y];
-};
+} GameState;
 
 void *ClientConnectionsHandler(void *);
 void PlaceMines();
-void HandleExitSignal(int);
+void HandleExitSignal();
+void signal_handler(int signal);
 void *ClientCommunicationHandler(int, char *[256]);
 
+// Setup server, client socket variables
+int serverListen, clientConnect;
+
+// Setup pthread variables
+pthread_t tid;
+pthread_attr_t attr;
+
 int main(int argc, char* argv[]) {
-	// Random Number
-	srand(RANDOM_NUM_SEED);
+	int portNum;
+	struct sockaddr_in serv_addr, client;
+	int c = sizeof(struct sockaddr_in);
 
 	signal(SIGINT, HandleExitSignal);
 
-	// Setup pthread
-	pthread_t tid;
-	pthread_attr_t attr;
+	// Random Number
+	srand(RANDOM_NUM_SEED);
 
 	// Handle Port Connection
-	int portNum;
-	if(argc < 2){
+	if (argc < 2) {
 		fprintf(stderr, "%s\n", "No Port Provided - using default 12345");
 		portNum = 12345;
 	} else {
@@ -58,60 +65,71 @@ int main(int argc, char* argv[]) {
 		printf("Port Provided - using %d", portNum);
 	}
 
-	// Setup Server and client variables
-	int serverListen, clientConnect;
+	// Setup server socket
 	serverListen = socket(AF_INET, SOCK_STREAM, 0);
 
 	// Setup Server Address
-	struct sockaddr_in serv_addr, client;
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_addr.s_addr = INADDR_ANY;
 	serv_addr.sin_port = htons(portNum);
 
 	// Bind config to server
 	bind(serverListen, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
-	int c = sizeof(struct sockaddr_in);
 
 	// Listen for X connections - currently 10
 	listen(serverListen, 10);
 	
 	// Attempt a connection
-	while(clientConnect = accept(serverListen, (struct sockaddr *) &client, (socklen_t*)&c)){
+	while ((clientConnect = accept(serverListen, (struct sockaddr *) &client, (socklen_t*)&c))) {
 		puts("Accepting connection");
-		if (pthread_create(&tid, NULL,  ClientConnectionsHandler, (void * __restrict__) &clientConnect)< 0){
+		if (pthread_create(&tid, NULL, ClientConnectionsHandler, (void * __restrict__) & clientConnect) < 0){
 			return 1;
 		}
 		pthread_join(tid, NULL);
 		puts("Closing thread");
 	}
 
-	// Send test data
-	close (serverListen);
-
 	return 0;
 }
 
+// Handles Exiting on CTRL-C
+void HandleExitSignal() {
+	// Close socket connection
+	printf("\n\nClosing server and client sockets\n");
+	close (clientConnect);
+	close (serverListen);
+
+	// Kill threads and exit program
+	printf("Killing threads, exiting program...\n");
+	pthread_exit(&tid);
+
+	// Exit program
+	exit(0);
+}
+
 // Handle client connections
-void *ClientConnectionsHandler(void *serverListen){
+void *ClientConnectionsHandler(void *serverListen) {
 	// Prepare writing to client
 	char message[256] = "Successfully connected to server";
 
 	puts("Successfully created thread");
 	int socket = *(int*) serverListen;
 	puts("Writing to client");
-	//write(socket, message, sizeof(message));
-	ClientCommunicationHandler(socket, &message);
+	ClientCommunicationHandler(socket, (char **)message);
+
+	return 0;
 }
 
 // Handle sending data to client
-void *ClientCommunicationHandler(int socket, char *message[256]){
-	write(socket, message, strlen(message) + 1);
+void *ClientCommunicationHandler(int socket, char *message[256]) {
+	write(socket, message, strlen(*message) + 1);
+
 	return 0;
 }
 
 // Place mines
 void PlaceMines(){
-	for (int i = 0; i < NUM_MINES; i++){
+	for (int i = 0; i < NUM_MINES; i++) {
 		int x, y;
 		/*
 		do {
@@ -122,12 +140,6 @@ void PlaceMines(){
 	}
 }
 
-void TileContainsMine(int x, int y){
+void TileContainsMine(int x, int y) {
 
-}
-
-// Handles Exiting on CTRL-C
-void HandleExitSignal(int signal){
-	printf("\nExiting Program... Killing Process: %d\n",getpid());
-	exit(0);
 }
