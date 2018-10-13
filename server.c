@@ -114,7 +114,7 @@ int main(int argc, char* argv[]) {
 	close(clientConnect);
 }
 
-// Handles Exiting on CTRL-C
+// TODO: DOESNT WORK AS EXPECTED
 void HandleExitSignal() {
 	// Close socket connection
 	printf("\n\nClosing server and client sockets\n");
@@ -135,13 +135,18 @@ void HandleExitSignal() {
 void ClientConnectionsHandler(int socket_id) {
 	char message[MAXDATASIZE];
 	int read_size;
-	memset(message, '\0', sizeof message);
-	read_size = ReceiveData(socket_id, message, MAXDATASIZE);
-	fprintf("Received username: %s", message);
 
-	// memset(message, '\0', sizeof message);
-	// read_size = ReceiveData(clientSocket, message, MAXDATASIZE);
-	// printf("Received password: %s", message);
+	// Receive username
+	read_size = ReceiveData(socket_id, message, MAXDATASIZE);
+	char username[strlen(message)];
+	strcpy(username, message);
+	fprintf(stderr, "Received username: %s\n", username);
+
+	// Receive password
+	read_size = ReceiveData(socket_id, message, MAXDATASIZE);
+	char password[strlen(message)];
+	strcpy(password, message);
+	fprintf(stderr, "Received password: %s\n", password);
 }
 
 // Place mines

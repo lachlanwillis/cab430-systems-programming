@@ -18,17 +18,14 @@ void StartMinesweeper(int serverSocket) {
   fprintf(stderr, "You are required to log on with your registered name and password:\n\n");
   fprintf(stderr, "Username: "); //Add read input
   scanf("%s", username);
-  fprintf(stderr, "\n");
 
   shortRetval = SendData(serverSocket, username, strlen(username));
 
   // Get password
   fprintf(stderr, "Password: "); //Add read input
-  // scanf("%s", password);
-  // fprintf(stderr, "\n\n");
+  scanf("%s", password);
 
-  // Send authentication data to server
-  // shortRetval = SendData(serverSocket, password, strlen(password));
+  shortRetval = SendData(serverSocket, password, strlen(password));
 }
 
 int ReceiveData(int serverSocket, char* message, short messageSize) {
@@ -38,6 +35,7 @@ int ReceiveData(int serverSocket, char* message, short messageSize) {
     perror("recv");
 		exit(1);
   }
+  message[shortRetval]='\0';
   return shortRetval;
 }
 

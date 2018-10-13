@@ -4,16 +4,12 @@
 // create functions here that are defined in the header
 int ReceiveData(int serverSocket, char* message, short messageSize) {
   int shortRetval = -1;
-  int *results = malloc(sizeof(int)*messageSize);
 
-  if ((shortRetval = recv(serverSocket, &message, messageSize, 0)) == -1) {
+  if ((shortRetval = recv(serverSocket, message, messageSize, 0)) == -1) {
     perror("recv");
     exit(1);
   }
-  results = ntohs(message);
-
-  printf("%d", results);
-
+  message[shortRetval]='\0';
   return shortRetval;
 }
 
