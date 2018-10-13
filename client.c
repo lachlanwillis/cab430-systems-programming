@@ -8,6 +8,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include "minesweeperClient.h"
+
 #define MAXDATASIZE 256
 
 int main(int argc, char* argv[]){
@@ -64,12 +66,7 @@ int main(int argc, char* argv[]){
   // print the data we got
   fprintf(stderr, "%s\n", buf);
 
-  fprintf(stderr, "=================================================================\n");
-  fprintf(stderr, "Welcome to the online Minesweeper gaming system\n");
-  fprintf(stderr, "=================================================================\n\n");
-
-  fprintf(stderr, "You are required to log on with your registered name and password:\n\n");
-  fprintf(stderr, "Username: "); //Add read input
+  StartMinesweeper();
 
   while(1) {};
 

@@ -16,6 +16,8 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "minesweeperServer.h"
+
 #define RANDOM_NUM_SEED 42
 
 #define NUM_TILES_X 9
