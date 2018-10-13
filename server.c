@@ -25,6 +25,7 @@
 #define NUM_MINES 10
 
 #define TOTAL_CONNECTIONS 10
+#define MAXDATASIZE 256
 
 // Define what a tile is
 typedef struct {
@@ -55,9 +56,6 @@ pthread_attr_t attr;
 int main(int argc, char* argv[]) {
 	// Setup Handle Exit Signal
 	signal(SIGINT, HandleExitSignal);
-	signal(SIGKILL, HandleExitSignal);
-	signal(SIGQUIT, HandleExitSignal);
-	signal(SIGABRT, HandleExitSignal);
 
 	// Seed the random number
 	srand(RANDOM_NUM_SEED);
@@ -120,6 +118,8 @@ int main(int argc, char* argv[]) {
 void HandleExitSignal() {
 	// Close socket connection
 	printf("\n\nClosing server and client sockets\n");
+	shutdown(clientConnect, 1);
+	shutdown(serverListen, 1);
 	close (clientConnect);
 	close (serverListen);
 
@@ -132,17 +132,16 @@ void HandleExitSignal() {
 }
 
 // Handle client connections
-void ClientConnectionsHandler(int clientSocket) {
-	// Prepare writing to client
-	char message[256] = "Successfully connected to server";
-	send(clientSocket, &message, sizeof(message), 0);
+void ClientConnectionsHandler(int socket_id) {
+	char message[MAXDATASIZE];
+	int read_size;
+	memset(message, '\0', sizeof message);
+	read_size = ReceiveData(socket_id, message, MAXDATASIZE);
+	fprintf("Received username: %s", message);
 
-	// ClientCommunicationHandler(clientSocket, (char **)message);
-}
-
-// Handle sending data to client
-void ClientCommunicationHandler(int client_socket, char *message[256]) {
-	send(socket, &message, strlen(*message) + 1, 0);
+	// memset(message, '\0', sizeof message);
+	// read_size = ReceiveData(clientSocket, message, MAXDATASIZE);
+	// printf("Received password: %s", message);
 }
 
 // Place mines

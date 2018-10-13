@@ -14,11 +14,10 @@
 
 int main(int argc, char* argv[]){
   // Setup port and connection address
-  int portNum, clientConnect, connectionStatus, numbytes;
-  char buf[MAXDATASIZE];
+  int portNum, clientConnect, connectionStatus, read_size;
   char * inetAddr;
-  char testMessage[256];
   struct sockaddr_in serverAddress;
+  char message[MAXDATASIZE];
 
   if (argc == 3) {
     // User provided IP and Port
@@ -55,18 +54,12 @@ int main(int argc, char* argv[]){
 		exit(1);
   }
   fprintf(stderr, "Connected to server: %s\n", inetAddr);
-  
-  if ((numbytes = recv(clientConnect, buf, MAXDATASIZE, 0)) == -1) {
-    perror("recv");
-		exit(1);
-  }
 
-  buf[numbytes] = '\0';
-  
-  // print the data we got
-  fprintf(stderr, "%s\n", buf);
+  // Read connection status
+  // read_size = ReceiveData(clientConnect, message, MAXDATASIZE);
+  // fprintf(stderr, "%s\n\n", message);
 
-  StartMinesweeper();
+  StartMinesweeper(clientConnect);
 
   while(1) {};
 
