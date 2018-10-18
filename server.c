@@ -7,6 +7,7 @@
 #include <pthread.h>
 
 #include <string.h>
+#include <inttypes.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -39,10 +40,11 @@ typedef struct {
 	Tile tiles[NUM_TILES_X] [NUM_TILES_Y];
 } GameState;
 
-void ClientConnectionsHandler(int);
+void* ClientConnectionsHandler(void *);
 void PlaceMines();
 void HandleExitSignal();
 void ClientCommunicationHandler(int, char *[256]);
+int NumAuths(char *);
 
 // Setup server, client socket variables
 int serverListen, clientConnect, portNum;
@@ -103,10 +105,10 @@ int main(int argc, char* argv[]) {
 		}
 		printf("Server: received connection from %s\n", inet_ntoa(client.sin_addr));
 
-		// Create a thread to accept client	
+		// Create a thread to accept client
 		pthread_attr_t attr;
 		pthread_attr_init(&attr);
-		pthread_create(&client_thread, &attr, ClientConnectionsHandler, clientConnect);
+		pthread_create(&client_thread, &attr, ClientConnectionsHandler, (void *) clientConnect);
 
 		pthread_join(client_thread, NULL);
 	}
@@ -132,21 +134,62 @@ void HandleExitSignal() {
 }
 
 // Handle client connections
-void ClientConnectionsHandler(int socket_id) {
-	char message[MAXDATASIZE];
+void* ClientConnectionsHandler(void *args) {
+	int socket_id = (uintptr_t)args;
+	char authFile[50] = "Authentication.txt";
+	char loginDetails[13][2][256];
+
+	FILE *fd;
+	fd = fopen(authFile, "r");
+	int x, y;
+	for (x = 0; x < 12; x++){
+		for(y = 0; y < 2; y++){
+			fscanf(fd, "%s", loginDetails[x][y]);
+		}
+	}
+	fclose(fd);
+
+
+
+	char message[MAXDATASIZE], loginMessage[MAXDATASIZE];
 	int read_size;
+	while(strcmp(loginMessage, "1")!=0){
+		// Receive username
+		int user = -1;
+		strcpy(loginMessage, "0");
 
-	// Receive username
-	read_size = ReceiveData(socket_id, message, MAXDATASIZE);
-	char username[strlen(message)];
-	strcpy(username, message);
-	fprintf(stderr, "Received username: %s\n", username);
+		read_size = ReceiveData(socket_id, message, MAXDATASIZE);
+		char username[strlen(message)];
 
-	// Receive password
-	read_size = ReceiveData(socket_id, message, MAXDATASIZE);
-	char password[strlen(message)];
-	strcpy(password, message);
-	fprintf(stderr, "Received password: %s\n", password);
+		strcpy(username, message);
+		fprintf(stderr, "Received username: %s\n", username);
+		for(int i = 1; i < 12; i++){
+			if(strcmp(username, loginDetails[i][0]) == 0){
+				user = i;
+			}
+		}
+
+		// Receive password
+		read_size = ReceiveData(socket_id, message, MAXDATASIZE);
+		char password[strlen(message)];
+		strcpy(password, message);
+		fprintf(stderr, "Received password: %s\n", password);
+		int resMes = -1;
+		if((user > 0) && (strcmp(password, loginDetails[user][1]) == 0)){
+			// Continue
+			printf("Correct Username and Password\n");
+			strcpy(message, "1");
+			strcpy(loginMessage, "1");
+
+		}else{
+			printf("Wrong Username or Password\n");
+			strcpy(message, "0");
+			strcpy(loginMessage, "0");
+		}
+		resMes = SendData(socket_id, message, MAXDATASIZE);
+		printf("%s\n", loginMessage);
+	}
+
 }
 
 // Place mines
@@ -163,5 +206,26 @@ void PlaceMines(){
 }
 
 void TileContainsMine(int x, int y) {
+
+}
+
+
+int NumAuths(char *filename){
+	int lines = 0;
+	printf("opening file");
+	FILE *fd = fopen(filename, "r");
+	int i = 0;
+	lines++;
+	printf("file opened");
+	/*
+	while(!feof(fd)){
+		i = fgetc(fd);
+	  if(i == '\n'){
+	    lines++;
+	  }
+
+	}*/
+	fclose(fd);
+	return lines;
 
 }
