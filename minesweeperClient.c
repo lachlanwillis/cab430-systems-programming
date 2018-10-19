@@ -50,7 +50,14 @@ void StartMinesweeper(int serverSocket) {
   // At this point the user is logged in and can proceed to menu
   system("clear");
   int chosenOption = DisplayMenu();
+  if (chosenOption == 1){
 
+  }else if(chosenOption == 2){
+
+  }else if(chosenOption == 3){
+    system("clear");
+    exit(EXIT_SUCCESS);
+  }
 
 }
 
@@ -74,7 +81,7 @@ int DisplayMenu(){
     return(2);
   } else if (strcmp("3", selectionOption) == 0){
     // Quit
-    return (3);
+    return(3);
   } else {
     // Incorrect
     fprintf(stderr, "Did not enter 1-3, please try again.\n\n");
