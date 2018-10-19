@@ -147,6 +147,8 @@ void ClientConnectionsHandler(int socket_id) {
 	char password[strlen(message)];
 	strcpy(password, message);
 	fprintf(stderr, "Received password: %s\n", password);
+
+	// Check authentication of user and pass and handle :)
 }
 
 // Place mines
