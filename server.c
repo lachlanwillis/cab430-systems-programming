@@ -8,6 +8,7 @@
 
 #include <string.h>
 #include <inttypes.h>
+#include <malloc.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -106,6 +107,7 @@ int main(int argc, char* argv[]) {
 		printf("Server: received connection from %s\n", inet_ntoa(client.sin_addr));
 
 		// Create a thread to accept client
+		// TODO: Threading does not work with multiple concurrent users.
 		pthread_attr_t attr;
 		pthread_attr_init(&attr);
 		pthread_create(&client_thread, &attr, ClientConnectionsHandler, (void *) clientConnect);
@@ -190,42 +192,27 @@ void* ClientConnectionsHandler(void *args) {
 		printf("%s\n", loginMessage);
 	}
 
+
+
+	// Generate Game State - TODO: Expand for multithreading
+	//struct GameState gameState1;
+
+
 }
 
 // Place mines
 void PlaceMines(){
 	for (int i = 0; i < NUM_MINES; i++) {
 		int x, y;
-		/*
+
 		do {
 			x = rand() % NUM_TILES_X;
 			y = rand() % NUM_TILES_Y;
 		} while (TileContainsMine(x,y));
-		*/
+
 	}
 }
 
 void TileContainsMine(int x, int y) {
-
-}
-
-
-int NumAuths(char *filename){
-	int lines = 0;
-	printf("opening file");
-	FILE *fd = fopen(filename, "r");
-	int i = 0;
-	lines++;
-	printf("file opened");
-	/*
-	while(!feof(fd)){
-		i = fgetc(fd);
-	  if(i == '\n'){
-	    lines++;
-	  }
-
-	}*/
-	fclose(fd);
-	return lines;
 
 }
