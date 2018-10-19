@@ -28,9 +28,9 @@ int main(int argc, char* argv[]){
   } else if (argc == 1) {
     // User did not provide any information - use defaults
     portNum = 12345;
-    inetAddr = "192.168.1.120";
+    inetAddr = "0.0.0.0";
 
-    printf("No IP and Port provided - using default 192.168.1.120:12345\n");
+    printf("No IP and Port provided - using default 0.0.0.0:12345\n");
   } else {
     // Error in provided information
     fprintf(stderr, "Usage: %s hostname port -OR- %s\n", argv[0], argv[0]);
@@ -43,7 +43,7 @@ int main(int argc, char* argv[]){
 		exit(1);
   }
   fprintf(stderr, "Connecting to the server socket\n");
-  
+
   serverAddress.sin_family = AF_INET;
   serverAddress.sin_port= htons(portNum);
   serverAddress.sin_addr.s_addr = inet_addr(inetAddr);

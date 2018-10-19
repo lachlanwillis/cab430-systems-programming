@@ -24,4 +24,4 @@ clean:
 	rm -f server
 	rm -f *.o
 
-.PHONY: all clean 
+.PHONY: all clean

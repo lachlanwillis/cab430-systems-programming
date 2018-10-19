@@ -7,6 +7,8 @@
 #include <pthread.h>
 
 #include <string.h>
+#include <inttypes.h>
+#include <malloc.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -39,10 +41,11 @@ typedef struct {
 	Tile tiles[NUM_TILES_X] [NUM_TILES_Y];
 } GameState;
 
-void ClientConnectionsHandler(int);
+void* ClientConnectionsHandler(void *);
 void PlaceMines();
 void HandleExitSignal();
 void ClientCommunicationHandler(int, char *[256]);
+int NumAuths(char *);
 
 // Setup server, client socket variables
 int serverListen, clientConnect, portNum;
@@ -103,10 +106,11 @@ int main(int argc, char* argv[]) {
 		}
 		printf("Server: received connection from %s\n", inet_ntoa(client.sin_addr));
 
-		// Create a thread to accept client	
+		// Create a thread to accept client
+		// TODO: Threading does not work with multiple concurrent users.
 		pthread_attr_t attr;
 		pthread_attr_init(&attr);
-		pthread_create(&client_thread, &attr, ClientConnectionsHandler, clientConnect);
+		pthread_create(&client_thread, &attr, ClientConnectionsHandler, (void *) clientConnect);
 
 		pthread_join(client_thread, NULL);
 	}
@@ -131,36 +135,108 @@ void HandleExitSignal() {
 	exit(0);
 }
 
+
+
+
+
+
 // Handle client connections
-void ClientConnectionsHandler(int socket_id) {
-	char message[MAXDATASIZE];
+void* ClientConnectionsHandler(void *args) {
+	int socket_id = (uintptr_t)args;
+	char authFile[50] = "Authentication.txt";
+	char loginDetails[13][2][256];
+
+	FILE *fd;
+	fd = fopen(authFile, "r");
+	int x, y;
+	for (x = 0; x < 12; x++){
+		for(y = 0; y < 2; y++){
+			fscanf(fd, "%s", loginDetails[x][y]);
+		}
+	}
+	fclose(fd);
+
+	char message[MAXDATASIZE], loginMessage[MAXDATASIZE];
 	int read_size;
+	while(strcmp(loginMessage, "1")!=0){
+		// Receive username
+		int user = -1;
+		strcpy(loginMessage, "0");
 
-	// Receive username
-	read_size = ReceiveData(socket_id, message, MAXDATASIZE);
-	char username[strlen(message)];
-	strcpy(username, message);
-	fprintf(stderr, "Received username: %s\n", username);
+		read_size = ReceiveData(socket_id, message, MAXDATASIZE);
+		char username[strlen(message)];
 
-	// Receive password
-	read_size = ReceiveData(socket_id, message, MAXDATASIZE);
-	char password[strlen(message)];
-	strcpy(password, message);
-	fprintf(stderr, "Received password: %s\n", password);
+		strcpy(username, message);
+		fprintf(stderr, "Received username: %s\n", username);
+		for(int i = 1; i < 12; i++){
+			if(strcmp(username, loginDetails[i][0]) == 0){
+				user = i;
+			}
+		}
 
-	// Check authentication of user and pass and handle :)
+		// Receive password
+		read_size = ReceiveData(socket_id, message, MAXDATASIZE);
+		char password[strlen(message)];
+		strcpy(password, message);
+		fprintf(stderr, "Received password: %s\n", password);
+		int resMes = -1;
+		if((user > 0) && (strcmp(password, loginDetails[user][1]) == 0)){
+			// Continue
+			printf("Correct Username and Password\n");
+			strcpy(message, "1");
+			strcpy(loginMessage, "1");
+
+		}else{
+			printf("Wrong Username or Password\n");
+			strcpy(message, "0");
+			strcpy(loginMessage, "0");
+		}
+		resMes = SendData(socket_id, message, MAXDATASIZE);
+		printf("%s\n", loginMessage);
+	}
+
+	// Await information on what the client wishes to do
+	printf("Awaiting instruction from user\n");
+	int clientFinished = 0;
+	while(clientFinished != 1){
+		//char* res[MAXDATASIZE];
+		int msg = ReceiveData(socket_id, message, MAXDATASIZE);
+		//res = message;
+		if (strcmp("1", message) == 0){
+	    // Start Minesweeper
+
+
+	  } else if (strcmp("2", message) == 0){
+	    // Show Leaderboard
+
+
+	  } else if (strcmp("3", message) == 0){
+	    // Quit
+			printf("Client Disconnecting\n");
+	    close(socket_id);
+			pthread_join(client_thread, NULL);
+			clientFinished = 1;
+	  }
+
+
+	}
+
+	// Generate Game State - TODO: Expand for multithreading
+	//struct GameState gameState1;
+
+
 }
 
 // Place mines
 void PlaceMines(){
 	for (int i = 0; i < NUM_MINES; i++) {
 		int x, y;
-		/*
+
 		do {
 			x = rand() % NUM_TILES_X;
 			y = rand() % NUM_TILES_Y;
 		} while (TileContainsMine(x,y));
-		*/
+
 	}
 }
 
