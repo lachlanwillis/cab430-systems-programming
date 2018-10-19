@@ -39,7 +39,6 @@ void StartMinesweeper(int serverSocket) {
     // wait for server response
     loginStatus = ReceiveData(serverSocket, message, MAXDATASIZE);
     strcpy(loginMessage, message);
-    printf("%s\n", loginMessage);
     if(strcmp(loginMessage, "1")==0){
       // Logged in Successfully
       printf("%s\n", "Successfully Logged in");
@@ -49,14 +48,19 @@ void StartMinesweeper(int serverSocket) {
   }
   // At this point the user is logged in and can proceed to menu
   system("clear");
-  int chosenOption = DisplayMenu();
-  if (chosenOption == 1){
+  while(1){
+    int chosenOption = DisplayMenu();
+    int commOption = -1;
+    if (chosenOption == 1){
 
-  }else if(chosenOption == 2){
-
-  }else if(chosenOption == 3){
-    system("clear");
-    exit(EXIT_SUCCESS);
+    }else if(chosenOption == 2){
+      ShowLeaderboard();
+    }else if(chosenOption == 3){
+      strcpy(message, "3");
+      commOption = SendData(serverSocket, message, MAXDATASIZE);
+      system("clear");
+      exit(EXIT_SUCCESS);
+    }
   }
 
 }
@@ -76,14 +80,17 @@ int DisplayMenu(){
   if (strcmp("1", selectionOption) == 0){
     // Start Minesweeper
     return(1);
+
   } else if (strcmp("2", selectionOption) == 0){
     // Show Leaderboard
     return(2);
+
   } else if (strcmp("3", selectionOption) == 0){
     // Quit
     return(3);
+
   } else {
-    // Incorrect
+    // Incorrect Input
     fprintf(stderr, "Did not enter 1-3, please try again.\n\n");
   }
 }
@@ -111,4 +118,10 @@ int SendData(int serverSocket, char* message, short messageSize) {
 		exit(1);
   }
   return shortRetval;
+}
+
+
+// Displays the Leaderboard - Requires Communication to Server
+void ShowLeaderboard(){
+
 }

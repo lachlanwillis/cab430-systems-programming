@@ -5,6 +5,11 @@
 
 
 
+void MinesweeeperMenu(){
+
+}
+
+
 // create functions here that are defined in the header
 int ReceiveData(int serverSocket, char* message, short messageSize) {
   int shortRetval = -1;

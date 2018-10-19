@@ -135,6 +135,11 @@ void HandleExitSignal() {
 	exit(0);
 }
 
+
+
+
+
+
 // Handle client connections
 void* ClientConnectionsHandler(void *args) {
 	int socket_id = (uintptr_t)args;
@@ -150,8 +155,6 @@ void* ClientConnectionsHandler(void *args) {
 		}
 	}
 	fclose(fd);
-
-
 
 	char message[MAXDATASIZE], loginMessage[MAXDATASIZE];
 	int read_size;
@@ -192,7 +195,31 @@ void* ClientConnectionsHandler(void *args) {
 		printf("%s\n", loginMessage);
 	}
 
+	// Await information on what the client wishes to do
+	printf("Awaiting instruction from user\n");
+	int clientFinished = 0;
+	while(clientFinished != 1){
+		//char* res[MAXDATASIZE];
+		int msg = ReceiveData(socket_id, message, MAXDATASIZE);
+		//res = message;
+		if (strcmp("1", message) == 0){
+	    // Start Minesweeper
 
+
+	  } else if (strcmp("2", message) == 0){
+	    // Show Leaderboard
+
+
+	  } else if (strcmp("3", message) == 0){
+	    // Quit
+			printf("Client Disconnecting\n");
+	    close(socket_id);
+			pthread_join(client_thread, NULL);
+			clientFinished = 1;
+	  }
+
+
+	}
 
 	// Generate Game State - TODO: Expand for multithreading
 	//struct GameState gameState1;
