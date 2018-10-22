@@ -10,6 +10,16 @@ int receivedData, sentData;
 char username[MAXDATASIZE], password[MAXDATASIZE];
 
 
+
+// State functions
+
+int DisplayMenu();
+void PlayMinesweeper(int);
+void ShowLeaderboard(int);
+void DrawGame();
+
+
+
 // create functions here that are defined in the header
 void StartMinesweeper(int serverSocket) {
   int shortRetval = -1, loginStatus = -1;
@@ -51,11 +61,14 @@ void StartMinesweeper(int serverSocket) {
   while(1){
     int chosenOption = DisplayMenu();
     int commOption = -1;
-    if (chosenOption == 1) {
-      //Play game: allocate storage
-    } else if(chosenOption == 2) {
-      ShowLeaderboard();
-    } else if(chosenOption == 3) {
+
+    if (chosenOption == 1){
+      PlayMinesweeper(serverSocket);
+      
+    } else if(chosenOption == 2){
+      ShowLeaderboard(serverSocket);
+      
+    } else if(chosenOption == 3){
       strcpy(message, "3");
       commOption = SendData(serverSocket, message, MAXDATASIZE);
       system("clear");
@@ -117,6 +130,76 @@ int SendData(int serverSocket, char* message, short messageSize) {
 }
 
 // Displays the Leaderboard - Requires Communication to Server
-void ShowLeaderboard(){
+void ShowLeaderboard(int serverSocket){
+
+}
+
+
+// Start Playing the game Minesweeper
+void PlayMinesweeper(int serverSocket){
+  int playingGame = 1, enteringOption = 1;
+  while(playingGame){
+    // Get Data from Server here.
+
+
+    // Draw Tiles
+    DrawGame();
+
+    while(enteringOption){
+      char* selectionOption;
+      scanf("%s", selectionOption);
+
+      if (strcmp("R", selectionOption) == 0){
+        // User chose to reveal a tile
+        printf("Enter tile coordinates: ");
+        char* chosenTile;
+        scanf("%s", chosenTile);
+
+      } else if (strcmp("P", selectionOption) == 0){
+        // User chose to place a flag
+        printf("Enter tile coordinates: ");
+        char* chosenTile;
+        scanf("%s", chosenTile);
+
+      } else if (strcmp("Q", selectionOption) == 0){
+        // User chose to quit
+        playingGame = 0;
+        system("clear");
+        return;
+
+      } else {
+      printf("Did not enter Options R, P or Q.\n Please try again\n");
+      }
+    }
+  }
+
+
+}
+
+
+void DrawGame(){
+  //char gameState[][], int minesLeft // Move this into the arguments passed once we ****** RECEIVE DATA FROM SERVER*****
+  int minesLeft = 10; // Once we have set up receiving data from Server ******REMOVE THIS******
+  int x, y;
+  printf("Remaining mines: %d\n\n", minesLeft);
+  printf("      1 2 3 4 5 6 7 8 9\n");
+  printf("  ---------------------\n");
+
+  for(x = 0; x < 9; x++){
+    char row;
+    int asciCon = x+65;
+    row = (char) asciCon;
+    printf("  %c | ", row);
+    for(y = 0; y < 9; y++){
+      printf(" %s", " ");
+    }
+    printf("\n");
+  }
+
+  printf("\n\nChoose an option:\n");
+  printf("<R> Reveal tile\n");
+  printf("<P> Place flag\n");
+  printf("<Q> Quit game\n\n");
+  printf("Option (R, P, Q):");
 
 }
