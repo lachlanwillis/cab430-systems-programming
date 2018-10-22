@@ -8,7 +8,7 @@
 
 #include <string.h>
 #include <inttypes.h>
-#include <malloc.h>
+// #include <malloc.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -46,6 +46,7 @@ void PlaceMines();
 void HandleExitSignal();
 void ClientCommunicationHandler(int, char *[256]);
 int NumAuths(char *);
+int TileContainsMine(int, int);
 
 // Setup server, client socket variables
 int serverListen, clientConnect, portNum;
@@ -227,6 +228,10 @@ void* ClientConnectionsHandler(void *args) {
 
 }
 
+int TileContainsMine(int x, int y) {
+	return 1;
+}
+
 // Place mines
 void PlaceMines(){
 	for (int i = 0; i < NUM_MINES; i++) {
@@ -238,8 +243,4 @@ void PlaceMines(){
 		} while (TileContainsMine(x,y));
 
 	}
-}
-
-void TileContainsMine(int x, int y) {
-
 }

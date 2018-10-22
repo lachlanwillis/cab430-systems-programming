@@ -51,11 +51,11 @@ void StartMinesweeper(int serverSocket) {
   while(1){
     int chosenOption = DisplayMenu();
     int commOption = -1;
-    if (chosenOption == 1){
-
-    }else if(chosenOption == 2){
+    if (chosenOption == 1) {
+      //Play game: allocate storage
+    } else if(chosenOption == 2) {
       ShowLeaderboard();
-    }else if(chosenOption == 3){
+    } else if(chosenOption == 3) {
       strcpy(message, "3");
       commOption = SendData(serverSocket, message, MAXDATASIZE);
       system("clear");
@@ -65,39 +65,35 @@ void StartMinesweeper(int serverSocket) {
 
 }
 
-
 int DisplayMenu(){
   int chosen = 0;
   while(chosen != 1){
-  fprintf(stderr, "Please enter a selection:\n");
-  fprintf(stderr, "<1> Play Minesweeper\n");
-  fprintf(stderr, "<2> Show Leaderboard\n");
-  fprintf(stderr, "<3> Quit\n");
-  fprintf(stderr, "\nSelection option (1-3):");
+    fprintf(stderr, "Please enter a selection:\n");
+    fprintf(stderr, "<1> Play Minesweeper\n");
+    fprintf(stderr, "<2> Show Leaderboard\n");
+    fprintf(stderr, "<3> Quit\n");
+    fprintf(stderr, "\nSelection option (1-3):");
 
-  char* selectionOption;
-  scanf("%s", selectionOption);
-  if (strcmp("1", selectionOption) == 0){
-    // Start Minesweeper
-    return(1);
+    char* selectionOption;
+    scanf("%s", selectionOption);
+    if (strcmp("1", selectionOption) == 0){
+      // Start Minesweeper
+      return(1);
 
-  } else if (strcmp("2", selectionOption) == 0){
-    // Show Leaderboard
-    return(2);
+    } else if (strcmp("2", selectionOption) == 0){
+      // Show Leaderboard
+      return(2);
 
-  } else if (strcmp("3", selectionOption) == 0){
-    // Quit
-    return(3);
+    } else if (strcmp("3", selectionOption) == 0){
+      // Quit
+      return(3);
 
-  } else {
-    // Incorrect Input
-    fprintf(stderr, "Did not enter 1-3, please try again.\n\n");
+    } else {
+      // Incorrect Input
+      fprintf(stderr, "Did not enter 1-3, please try again.\n\n");
+    }
   }
 }
-
-}
-
-
 
 int ReceiveData(int serverSocket, char* message, short messageSize) {
   int shortRetval = -1;
@@ -119,7 +115,6 @@ int SendData(int serverSocket, char* message, short messageSize) {
   }
   return shortRetval;
 }
-
 
 // Displays the Leaderboard - Requires Communication to Server
 void ShowLeaderboard(){
