@@ -10,6 +10,16 @@ int receivedData, sentData;
 char username[MAXDATASIZE], password[MAXDATASIZE];
 
 
+
+// State functions
+
+int DisplayMenu();
+void PlayMinesweeper(int);
+void ShowLeaderboard(int);
+void DrawGame();
+
+
+
 // create functions here that are defined in the header
 void StartMinesweeper(int serverSocket) {
   int shortRetval = -1, loginStatus = -1;
@@ -52,9 +62,9 @@ void StartMinesweeper(int serverSocket) {
     int chosenOption = DisplayMenu();
     int commOption = -1;
     if (chosenOption == 1){
-
+      PlayMinesweeper(serverSocket);
     }else if(chosenOption == 2){
-      ShowLeaderboard();
+      ShowLeaderboard(serverSocket);
     }else if(chosenOption == 3){
       strcpy(message, "3");
       commOption = SendData(serverSocket, message, MAXDATASIZE);
@@ -69,34 +79,33 @@ void StartMinesweeper(int serverSocket) {
 int DisplayMenu(){
   int chosen = 0;
   while(chosen != 1){
-  fprintf(stderr, "Please enter a selection:\n");
-  fprintf(stderr, "<1> Play Minesweeper\n");
-  fprintf(stderr, "<2> Show Leaderboard\n");
-  fprintf(stderr, "<3> Quit\n");
-  fprintf(stderr, "\nSelection option (1-3):");
+    fprintf(stderr, "Please enter a selection:\n");
+    fprintf(stderr, "<1> Play Minesweeper\n");
+    fprintf(stderr, "<2> Show Leaderboard\n");
+    fprintf(stderr, "<3> Quit\n");
+    fprintf(stderr, "\nSelection option (1-3):");
 
-  char* selectionOption;
-  scanf("%s", selectionOption);
-  if (strcmp("1", selectionOption) == 0){
-    // Start Minesweeper
-    return(1);
-
-  } else if (strcmp("2", selectionOption) == 0){
-    // Show Leaderboard
-    return(2);
-
-  } else if (strcmp("3", selectionOption) == 0){
-    // Quit
-    return(3);
-
-  } else {
-    // Incorrect Input
-    fprintf(stderr, "Did not enter 1-3, please try again.\n\n");
+    char* selectionOption;
+    scanf("%s", selectionOption);
+    if (strcmp("1", selectionOption) == 0){
+      // Start Minesweeper
+      return(1);
+      chosen = 1;
+    } else if (strcmp("2", selectionOption) == 0){
+      // Show Leaderboard
+      return(2);
+      chosen = 1;
+    } else if (strcmp("3", selectionOption) == 0){
+      // Quit
+      return(3);
+      chosen = 1;
+    } else {
+      // Incorrect Input
+      fprintf(stderr, "Did not enter 1-3, please try again.\n\n");
+    }
   }
-}
 
 }
-
 
 
 int ReceiveData(int serverSocket, char* message, short messageSize) {
@@ -122,6 +131,40 @@ int SendData(int serverSocket, char* message, short messageSize) {
 
 
 // Displays the Leaderboard - Requires Communication to Server
-void ShowLeaderboard(){
+void ShowLeaderboard(int serverSocket){
 
+}
+
+// Start Playing the game Minesweeper
+void PlayMinesweeper(int serverSocket){
+  DrawGame();
+}
+
+
+void DrawGame(){
+  //char gameState[][], int minesLeft
+  int x, y;
+  printf("Remaining mines: %d\n\n", 10);
+  printf("      1 2 3 4 5 6 7 8 9\n");
+  printf("  ---------------------\n");
+
+  for(x = 0; x < 9; x++){
+    char row;
+    int asciCon = x+65;
+    row = (char) asciCon;
+    printf("  %c | ", row);
+    for(y = 0; y < 9; y++){
+      printf(" %s", " ");
+    }
+    printf("\n");
+  }
+
+
+  printf("\n\nChoose an option:\n");
+  printf("<R> Reveal tile\n");
+  printf("<P> Place flag\n");
+  printf("<Q> Quit game\n\n");
+  printf("Option (R, P, Q):");
+  char* selectionOption;
+  scanf("%s", selectionOption);
 }
