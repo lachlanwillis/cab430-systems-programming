@@ -135,16 +135,54 @@ void ShowLeaderboard(int serverSocket){
 
 }
 
+
 // Start Playing the game Minesweeper
 void PlayMinesweeper(int serverSocket){
-  DrawGame();
+  int playingGame = 1, enteringOption = 1;
+  while(playingGame){
+    // Get Data from Server here.
+
+
+    // Draw Tiles
+    DrawGame();
+
+    while(enteringOption){
+      char* selectionOption;
+      scanf("%s", selectionOption);
+
+      if (strcmp("R", selectionOption) == 0){
+        // User chose to reveal a tile
+        printf("Enter tile coordinates: ");
+        char* chosenTile;
+        scanf("%s", chosenTile);
+
+      } else if (strcmp("P", selectionOption) == 0){
+        // User chose to place a flag
+        printf("Enter tile coordinates: ");
+        char* chosenTile;
+        scanf("%s", chosenTile);
+
+      } else if (strcmp("Q", selectionOption) == 0){
+        // User chose to quit
+        playingGame = 0;
+        system("clear");
+        return;
+
+      } else {
+      printf("Did not enter Options R, P or Q.\n Please try again\n");
+      }
+    }
+  }
+
+
 }
 
 
 void DrawGame(){
-  //char gameState[][], int minesLeft
+  //char gameState[][], int minesLeft // Move this into the arguments passed once we ****** RECEIVE DATA FROM SERVER*****
+  int minesLeft = 10; // Once we have set up receiving data from Server ******REMOVE THIS******
   int x, y;
-  printf("Remaining mines: %d\n\n", 10);
+  printf("Remaining mines: %d\n\n", minesLeft);
   printf("      1 2 3 4 5 6 7 8 9\n");
   printf("  ---------------------\n");
 
@@ -159,12 +197,10 @@ void DrawGame(){
     printf("\n");
   }
 
-
   printf("\n\nChoose an option:\n");
   printf("<R> Reveal tile\n");
   printf("<P> Place flag\n");
   printf("<Q> Quit game\n\n");
   printf("Option (R, P, Q):");
-  char* selectionOption;
-  scanf("%s", selectionOption);
+
 }
