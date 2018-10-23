@@ -59,7 +59,9 @@ void StartMinesweeper(int serverSocket) {
   // At this point the user is logged in and can proceed to menu
   system("clear");
   while(1){
+    fprintf(stderr, "before display");
     int chosenOption = DisplayMenu();
+    fprintf(stderr, "after display");
     int commOption = -1;
 
     if (chosenOption == 1){
@@ -79,8 +81,8 @@ void StartMinesweeper(int serverSocket) {
 }
 
 int DisplayMenu(){
-  int chosen = 0;
-  while(chosen != 1){
+  int selection = 0;
+  while (selection == 0) {
     fprintf(stderr, "Please enter a selection:\n");
     fprintf(stderr, "<1> Play Minesweeper\n");
     fprintf(stderr, "<2> Show Leaderboard\n");
@@ -89,23 +91,22 @@ int DisplayMenu(){
 
     char* selectionOption;
     scanf("%s", selectionOption);
+
     if (strcmp("1", selectionOption) == 0){
       // Start Minesweeper
-      return(1);
-
+      selection = 1;
     } else if (strcmp("2", selectionOption) == 0){
       // Show Leaderboard
-      return(2);
-
+      selection = 2;
     } else if (strcmp("3", selectionOption) == 0){
       // Quit
-      return(3);
-
+      selection = 3;
     } else {
       // Incorrect Input
       fprintf(stderr, "Did not enter 1-3, please try again.\n\n");
     }
   }
+  return selection;
 }
 
 int ReceiveData(int serverSocket, char* message, short messageSize) {

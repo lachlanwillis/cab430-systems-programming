@@ -61,8 +61,6 @@ int main(int argc, char* argv[]){
 
   StartMinesweeper(clientConnect);
 
-  while(1) {};
-
   // Close connection
   close(clientConnect);
 
