@@ -41,12 +41,23 @@ typedef struct {
 	Tile tiles[NUM_TILES_X] [NUM_TILES_Y];
 } GameState;
 
+struct LeaderboardEntry {
+	char username[MAXDATASIZE];
+	int time;
+	int won;
+	int played;
+};
+
+// Setup leaderboard array
+struct LeaderboardEntry leaderboard[TOTAL_CONNECTIONS];
+
 void* ClientConnectionsHandler(void *);
 void PlaceMines();
 void HandleExitSignal();
 void ClientCommunicationHandler(int, char *[256]);
 int NumAuths(char *);
 int TileContainsMine(int, int);
+void SendLeaderboard(int, struct LeaderboardEntry*);
 
 // Setup server, client socket variables
 int serverListen, clientConnect, portNum;
@@ -60,6 +71,12 @@ pthread_attr_t attr;
 int main(int argc, char* argv[]) {
 	// Setup Handle Exit Signal
 	signal(SIGINT, HandleExitSignal);
+
+	// TEST LEADERBOARD USER
+	strcpy(leaderboard[0].username, "Test McTest");
+	leaderboard[0].played = 10;
+	leaderboard[0].time = 123;
+	leaderboard[0].won = 7;
 
 	// Seed the random number
 	srand(RANDOM_NUM_SEED);
@@ -136,13 +153,10 @@ void HandleExitSignal() {
 	exit(0);
 }
 
-
-
-
-
-
 // Handle client connections
 void* ClientConnectionsHandler(void *args) {
+	char message[MAXDATASIZE], loginMessage[MAXDATASIZE];
+	int read_size;
 	int socket_id = (uintptr_t)args;
 	char authFile[50] = "Authentication.txt";
 	char loginDetails[13][2][256];
@@ -157,8 +171,6 @@ void* ClientConnectionsHandler(void *args) {
 	}
 	fclose(fd);
 
-	char message[MAXDATASIZE], loginMessage[MAXDATASIZE];
-	int read_size;
 	while(strcmp(loginMessage, "1")!=0){
 		// Receive username
 		int user = -1;
@@ -193,24 +205,23 @@ void* ClientConnectionsHandler(void *args) {
 			strcpy(loginMessage, "0");
 		}
 		resMes = SendData(socket_id, message, MAXDATASIZE);
-		printf("%s\n", loginMessage);
+		printf("Client logged in successfully\n");
 	}
 
 	// Await information on what the client wishes to do
 	printf("Awaiting instruction from user\n");
 	int clientFinished = 0;
 	while(clientFinished != 1){
-		//char* res[MAXDATASIZE];
 		int msg = ReceiveData(socket_id, message, MAXDATASIZE);
-		//res = message;
+
 		if (strcmp("1", message) == 0){
 	    // Start Minesweeper
 
-
 	  } else if (strcmp("2", message) == 0){
 	    // Show Leaderboard
-
-
+			printf("Sending leaderboard\n");
+			SendLeaderboard(socket_id, leaderboard);
+			printf("Sent leaderboard\n");
 	  } else if (strcmp("3", message) == 0){
 	    // Quit
 			printf("Client Disconnecting\n");
@@ -218,14 +229,10 @@ void* ClientConnectionsHandler(void *args) {
 			pthread_join(client_thread, NULL);
 			clientFinished = 1;
 	  }
-
-
 	}
 
 	// Generate Game State - TODO: Expand for multithreading
 	//struct GameState gameState1;
-
-
 }
 
 int TileContainsMine(int x, int y) {
@@ -242,5 +249,20 @@ void PlaceMines(){
 			y = rand() % NUM_TILES_Y;
 		} while (TileContainsMine(x,y));
 
+	}
+}
+
+void SendLeaderboard(int socket, struct LeaderboardEntry *leaderboard) {
+	int time_count, won, played;
+
+	for (int i = 0; i < TOTAL_CONNECTIONS; i++) {
+		time_count = htonl(leaderboard[i].time);
+		won = htonl(leaderboard[i].won);
+		played = htonl(leaderboard[i].played);
+
+		SendData(socket, leaderboard[i].username, MAXDATASIZE);
+		write(socket, &time_count, sizeof(time_count));
+		write(socket, &won, sizeof(won));
+		write(socket, &played, sizeof(played));	
 	}
 }

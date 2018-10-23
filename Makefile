@@ -1,4 +1,4 @@
-CC = c99
+CC = gcc
 LDFLAGS =
 
 # LIST ALL OUTPUT FILES WE WANT
