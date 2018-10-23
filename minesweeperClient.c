@@ -5,20 +5,19 @@
 #include <sys/socket.h>
 
 #define MAXDATASIZE 256
+#define LEADERBOARD_SIZE 10
 
 int receivedData, sentData;
 char username[MAXDATASIZE], password[MAXDATASIZE];
 
+struct LeaderboardEntry {
+	char username[MAXDATASIZE];
+	int time;
+	int won;
+	int played;
+};
 
-
-// State functions
-
-int DisplayMenu();
-void PlayMinesweeper(int);
-void ShowLeaderboard(int);
-void DrawGame();
-
-
+struct LeaderboardEntry leaderboard[LEADERBOARD_SIZE];
 
 // create functions here that are defined in the header
 void StartMinesweeper(int serverSocket) {
@@ -59,15 +58,13 @@ void StartMinesweeper(int serverSocket) {
   // At this point the user is logged in and can proceed to menu
   system("clear");
   while(1){
-    int chosenOption = DisplayMenu();
+    int chosenOption = DisplayMenu(serverSocket);
     int commOption = -1;
 
     if (chosenOption == 1){
       PlayMinesweeper(serverSocket);
-
     } else if(chosenOption == 2){
       ShowLeaderboard(serverSocket);
-
     } else if(chosenOption == 3){
       strcpy(message, "3");
       commOption = SendData(serverSocket, message, MAXDATASIZE);
@@ -75,11 +72,12 @@ void StartMinesweeper(int serverSocket) {
       exit(EXIT_SUCCESS);
     }
   }
-
 }
 
-int DisplayMenu(){
+int DisplayMenu(int serverSocket){
   int selection = 0;
+  char selectionOption;
+
   while (selection == 0) {
     fprintf(stderr, "Please enter a selection:\n");
     fprintf(stderr, "<1> Play Minesweeper\n");
@@ -87,9 +85,9 @@ int DisplayMenu(){
     fprintf(stderr, "<3> Quit\n");
     fprintf(stderr, "\nSelection option (1-3):");
 
-    char* selectionOption;
-
     scanf("%s", &selectionOption);
+
+    int shortRetval = SendData(serverSocket, &selectionOption, strlen(&selectionOption));
 
     if (strcmp("1", &selectionOption) == 0){
       // Start Minesweeper
@@ -130,11 +128,44 @@ int SendData(int serverSocket, char* message, short messageSize) {
   return shortRetval;
 }
 
-// Displays the Leaderboard - Requires Communication to Server
-void ShowLeaderboard(int serverSocket){
+int ReceiveLeaderboard(int socket, int size) {
+  int number_of_bytes;
+  int time_count = 0, played = 0, won = 0;
+  char recv_username[MAXDATASIZE];
 
+	for (int i = 0; i < size; i++) {
+    int shortRetval = ReceiveData(socket, recv_username, MAXDATASIZE);
+    shortRetval = read(socket, &time_count, sizeof(time_count));
+    shortRetval = read(socket, &won, sizeof(won));
+    shortRetval = read(socket, &played, sizeof(played));
+
+    strcpy(leaderboard[i].username, recv_username);
+    leaderboard[i].time = ntohl(time_count);
+    leaderboard[i].won = ntohl(won);
+    leaderboard[i].played = ntohl(played);
+	}
+	return number_of_bytes;
 }
 
+// Displays the Leaderboard - Requires Communication to Server
+void ShowLeaderboard(int serverSocket){
+  fprintf(stderr, "=================================================================\n");
+  fprintf(stderr, "Current Minesweeper Leaderboard\n");
+  fprintf(stderr, "=================================================================\n");
+
+  int shortRetval = -1;
+
+  // Get updated data from server
+  shortRetval = ReceiveLeaderboard(serverSocket, LEADERBOARD_SIZE);
+
+  // Show the leaderboard
+  for (int i = 0; i < LEADERBOARD_SIZE; i++) {
+    fprintf(stderr, "%s - ", leaderboard[i].username);
+    fprintf(stderr, "%d - ", leaderboard[i].time);
+    fprintf(stderr, "%d - ", leaderboard[i].won);
+    fprintf(stderr, "%d\n", leaderboard[i].played);
+  }
+}
 
 // Start Playing the game Minesweeper
 void PlayMinesweeper(int serverSocket){

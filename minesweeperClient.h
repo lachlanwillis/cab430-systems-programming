@@ -5,6 +5,10 @@
 void StartMinesweeper(int);
 int ReceiveData(int, char*, short);
 int SendData(int, char*, short);
-void ShowLeaderboard();
+int DisplayMenu();
+void PlayMinesweeper(int);
+void ShowLeaderboard(int);
+void DrawGame();
+int ReceiveLeaderboard(int, int);
 
 #endif //__MINESWEEPERCLIENT_H__ 
