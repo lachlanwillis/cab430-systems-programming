@@ -130,16 +130,15 @@ int SendData(int serverSocket, char* message, short messageSize) {
 int ReceiveLeaderboard(int socket, int size) {
   int number_of_bytes;
   int time_count = 0, played = 0, won = 0;
+  char recv_username[MAXDATASIZE];
 
 	for (int i = 0; i < size; i++) {
-    int shortRetval = ReceiveData(socket, username, MAXDATASIZE);
+    int shortRetval = ReceiveData(socket, recv_username, MAXDATASIZE);
     shortRetval = read(socket, &time_count, sizeof(time_count));
     shortRetval = read(socket, &won, sizeof(won));
     shortRetval = read(socket, &played, sizeof(played));
 
-    char username[strlen(username)];
-
-    strcpy(username, leaderboard[i].username);
+    strcpy(leaderboard[i].username, recv_username);
     leaderboard[i].time = ntohl(time_count);
     leaderboard[i].won = ntohl(won);
     leaderboard[i].played = ntohl(played);
