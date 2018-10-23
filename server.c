@@ -192,7 +192,7 @@ void* ClientConnectionsHandler(void *args) {
 		//res = message;
 		if (strcmp("1", message) == 0){
 	    // Start Minesweeper
-
+			MinesweeeperMenu();
 
 	  } else if (strcmp("2", message) == 0){
 	    // Show Leaderboard

@@ -23,6 +23,9 @@ typedef struct GameState {
 };
 
 void MinesweeeperMenu(){
+  struct GameState gamestate;
+  gamestate = PlaceMines();
+  gamestate.minesLeft = NUM_MINES;
 
 }
 

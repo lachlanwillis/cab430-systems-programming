@@ -59,9 +59,7 @@ void StartMinesweeper(int serverSocket) {
   // At this point the user is logged in and can proceed to menu
   system("clear");
   while(1){
-    fprintf(stderr, "before display");
     int chosenOption = DisplayMenu();
-    fprintf(stderr, "after display");
     int commOption = -1;
 
     if (chosenOption == 1){
@@ -90,7 +88,8 @@ int DisplayMenu(){
     fprintf(stderr, "\nSelection option (1-3):");
 
     char* selectionOption;
-    scanf("%s", selectionOption);
+
+    scanf("%s", &selectionOption);
 
     if (strcmp("1", &selectionOption) == 0){
       // Start Minesweeper
@@ -103,6 +102,7 @@ int DisplayMenu(){
       selection = 3;
     } else {
       // Incorrect Input
+      printf("Printed: %s\n", selectionOption);
       fprintf(stderr, "Did not enter 1-3, please try again.\n\n");
     }
   }
@@ -148,21 +148,21 @@ void PlayMinesweeper(int serverSocket){
 
     while(enteringOption){
       char* selectionOption;
-      scanf("%s", selectionOption);
+      scanf("%s", &selectionOption);
 
-      if (strcmp("R", selectionOption) == 0){
+      if (strcmp("r", &selectionOption) == 0){
         // User chose to reveal a tile
         printf("Enter tile coordinates: ");
         char* chosenTile;
         scanf("%s", chosenTile);
 
-      } else if (strcmp("P", selectionOption) == 0){
+      } else if (strcmp("p", &selectionOption) == 0){
         // User chose to place a flag
         printf("Enter tile coordinates: ");
         char* chosenTile;
         scanf("%s", chosenTile);
 
-      } else if (strcmp("Q", selectionOption) == 0){
+      } else if (strcmp("q", &selectionOption) == 0){
         // User chose to quit
         playingGame = 0;
         system("clear");
