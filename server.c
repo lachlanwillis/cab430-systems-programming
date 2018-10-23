@@ -29,24 +29,11 @@
 #define TOTAL_CONNECTIONS 10
 #define MAXDATASIZE 256
 
-// Define what a tile is
-typedef struct {
-	int adjacent_mines;
-	bool revealed;
-	bool is_mine;
-} Tile;
-
-typedef struct {
-	// More here
-	Tile tiles[NUM_TILES_X] [NUM_TILES_Y];
-} GameState;
 
 void* ClientConnectionsHandler(void *);
-void PlaceMines();
 void HandleExitSignal();
 void ClientCommunicationHandler(int, char *[256]);
 int NumAuths(char *);
-int TileContainsMine(int, int);
 
 // Setup server, client socket variables
 int serverListen, clientConnect, portNum;
@@ -226,21 +213,4 @@ void* ClientConnectionsHandler(void *args) {
 	//struct GameState gameState1;
 
 
-}
-
-int TileContainsMine(int x, int y) {
-	return 1;
-}
-
-// Place mines
-void PlaceMines(){
-	for (int i = 0; i < NUM_MINES; i++) {
-		int x, y;
-
-		do {
-			x = rand() % NUM_TILES_X;
-			y = rand() % NUM_TILES_Y;
-		} while (TileContainsMine(x,y));
-
-	}
 }

@@ -66,10 +66,10 @@ void StartMinesweeper(int serverSocket) {
 
     if (chosenOption == 1){
       PlayMinesweeper(serverSocket);
-      
+
     } else if(chosenOption == 2){
       ShowLeaderboard(serverSocket);
-      
+
     } else if(chosenOption == 3){
       strcpy(message, "3");
       commOption = SendData(serverSocket, message, MAXDATASIZE);
@@ -92,13 +92,13 @@ int DisplayMenu(){
     char* selectionOption;
     scanf("%s", selectionOption);
 
-    if (strcmp("1", selectionOption) == 0){
+    if (strcmp("1", &selectionOption) == 0){
       // Start Minesweeper
       selection = 1;
-    } else if (strcmp("2", selectionOption) == 0){
+    } else if (strcmp("2", &selectionOption) == 0){
       // Show Leaderboard
       selection = 2;
-    } else if (strcmp("3", selectionOption) == 0){
+    } else if (strcmp("3", &selectionOption) == 0){
       // Quit
       selection = 3;
     } else {
