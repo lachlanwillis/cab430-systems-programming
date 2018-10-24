@@ -214,7 +214,7 @@ void PlayMinesweeper(int serverSocket){
 void DrawGame(char gameState[MAXGAMESIZE]){
 	printf("Drawing Game\n");
   char minesLeft[2];
-	if(strcmp(&gameState[82], "0")){
+	if(strcmp(&gameState[82], "0") == 0){
 		strcpy(minesLeft, &gameState[MAXGAMESIZE]);
 	}else {
 		strcpy(minesLeft, "10");
