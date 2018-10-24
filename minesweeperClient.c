@@ -173,7 +173,7 @@ void ShowLeaderboard(int serverSocket){
 // Start Playing the game Minesweeper
 void PlayMinesweeper(int serverSocket){
   int playingGame = 1, enteringOption = 1;
-  while(playingGame){
+  do {
     // Get Data from Server here.
 		char gamestate[MAXGAMESIZE];
 		strcpy(gamestate, ReceiveGameState(serverSocket));
@@ -207,7 +207,7 @@ void PlayMinesweeper(int serverSocket){
       printf("Did not enter Options R, P or Q.\n Please try again\n");
       }
     }
-  }
+  } while(playingGame);
 }
 
 
@@ -228,10 +228,10 @@ void DrawGame(char gameState[MAXGAMESIZE]){
     char row;
     int asciCon = x+65;
     row = (char) asciCon;
-    printf("  %c | ", row);
+    printf("  %c |", row);
     for(y = 0; y < 9; y++){
 
-      printf(" %s", &gameState[x*9+y]);
+      printf(" %c", gameState[x*9+y]);
     }
     printf("\n");
   }
