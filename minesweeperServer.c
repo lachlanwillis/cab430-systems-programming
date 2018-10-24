@@ -4,7 +4,8 @@
 #include <sys/socket.h>
 #include <stdbool.h>
 #include <string.h>
-
+#include <arpa/inet.h>
+#include <unistd.h>
 
 #define NUM_TILES_X 9
 #define NUM_TILES_Y 9
@@ -21,7 +22,7 @@ typedef struct Tile{
 	int adjacent_mines;
 	bool revealed;
 	bool is_mine;
-};
+}Tile;
 
 struct GameState {
 	// More here
@@ -120,7 +121,7 @@ char *FormatGameState(struct GameState gamestate){
 			loc = (x * NUM_TILES_X) + y;
       if(gamestate.tiles[x][y].revealed == true){
         strcpy(&gameString[loc], " ");
-				
+
 			} else{
         strcpy(&gameString[loc], " ");
 
@@ -155,6 +156,6 @@ void SendLeaderboard(int socket, struct LeaderboardEntry *leaderboard) {
 		SendData(socket, leaderboard[i].username, MAXDATASIZE);
 		write(socket, &time_count, sizeof(time_count));
 		write(socket, &won, sizeof(won));
-		write(socket, &played, sizeof(played));	
+		write(socket, &played, sizeof(played));
 	}
-
+}

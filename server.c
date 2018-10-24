@@ -214,4 +214,3 @@ void* ClientConnectionsHandler(void *args) {
 	// Generate Game State - TODO: Expand for multithreading
 	//struct GameState gameState1;
 }
-
