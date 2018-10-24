@@ -10,21 +10,25 @@
 #define NUM_TILES_Y 9
 #define NUM_MINES 10
 
+
 #define MAXGAMESIZE 84
+#define TOTAL_CONNECTIONS 10
 #define MAXDATASIZE 256
 
 // Define what a tile is
 typedef struct Tile{
+
 	int adjacent_mines;
 	bool revealed;
 	bool is_mine;
-}Tile;
+};
 
-typedef struct GameState {
+struct GameState {
 	// More here
   int minesLeft;
 	Tile tiles[NUM_TILES_X] [NUM_TILES_Y];
 }GameState;
+
 
 void MinesweeeperMenu(int socket_id){
   struct GameState gamestate;
@@ -47,7 +51,6 @@ void MinesweeeperMenu(int socket_id){
     playing = 0;
 	}
 }
-
 
 // create functions here that are defined in the header
 int ReceiveData(int serverSocket, char* message, short messageSize) {
@@ -107,6 +110,7 @@ struct GameState PlaceMines(){
 }
 
 
+
 char *FormatGameState(struct GameState gamestate){
 	char gameString[MAXGAMESIZE];
 	for(int x = 0; x < NUM_TILES_X; x++){
@@ -139,6 +143,18 @@ char *FormatGameState(struct GameState gamestate){
 
 }
 
-void SendMinesweeper(char gameString[MAXGAMESIZE], int socket_id){
 
-}
+void SendLeaderboard(int socket, struct LeaderboardEntry *leaderboard) {
+	int time_count, won, played;
+
+	for (int i = 0; i < TOTAL_CONNECTIONS; i++) {
+		time_count = htonl(leaderboard[i].time);
+		won = htonl(leaderboard[i].won);
+		played = htonl(leaderboard[i].played);
+
+		SendData(socket, leaderboard[i].username, MAXDATASIZE);
+		write(socket, &time_count, sizeof(time_count));
+		write(socket, &won, sizeof(won));
+		write(socket, &played, sizeof(played));	
+	}
+
