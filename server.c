@@ -37,6 +37,7 @@ void HandleExitSignal();
 void ClientCommunicationHandler(int, char *[256]);
 int NumAuths(char *);
 
+
 // Setup server, client socket variables
 int serverListen, clientConnect, portNum;
 struct sockaddr_in serv_addr, client;
@@ -194,7 +195,8 @@ void* ClientConnectionsHandler(void *args) {
 
 		if (strcmp("1", message) == 0){
 	    // Start Minesweeper
-			MinesweeeperMenu();
+			MinesweeeperMenu(socket_id);
+
 	  } else if (strcmp("2", message) == 0){
 	    // Show Leaderboard
 			printf("Sending leaderboard\n");
@@ -212,3 +214,4 @@ void* ClientConnectionsHandler(void *args) {
 	// Generate Game State - TODO: Expand for multithreading
 	//struct GameState gameState1;
 }
+

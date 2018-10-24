@@ -3,17 +3,21 @@
 #include <stdlib.h>
 #include <sys/socket.h>
 #include <stdbool.h>
+#include <string.h>
 
 
 #define NUM_TILES_X 9
 #define NUM_TILES_Y 9
 #define NUM_MINES 10
 
+
+#define MAXGAMESIZE 84
 #define TOTAL_CONNECTIONS 10
 #define MAXDATASIZE 256
 
 // Define what a tile is
-struct Tile {
+typedef struct Tile{
+
 	int adjacent_mines;
 	bool revealed;
 	bool is_mine;
@@ -22,14 +26,30 @@ struct Tile {
 struct GameState {
 	// More here
   int minesLeft;
-	struct Tile tiles[NUM_TILES_X] [NUM_TILES_Y];
-};
+	Tile tiles[NUM_TILES_X] [NUM_TILES_Y];
+}GameState;
 
-void MinesweeeperMenu(){
+
+void MinesweeeperMenu(int socket_id){
   struct GameState gamestate;
+	printf("Placing Mines\n");
   gamestate = PlaceMines();
   gamestate.minesLeft = NUM_MINES;
-
+	printf("Mines placed\n");
+	int playing = 1;
+	while(playing){
+		int shortRetval = -1;
+		char gameString[MAXGAMESIZE];
+		char ret[MAXDATASIZE];
+		printf("Sending gamestate\n");
+		strcpy(gameString, FormatGameState(gamestate));
+		for(int i = 0; i < MAXGAMESIZE+1; i++){
+			printf("%c,", gameString[i]);
+		}
+		printf("\n");
+		shortRetval = SendData(socket_id, gameString, MAXGAMESIZE);
+    playing = 0;
+	}
 }
 
 // create functions here that are defined in the header
@@ -73,9 +93,56 @@ struct GameState PlaceMines(){
 			y = rand() % NUM_TILES_Y;
 		} while (TileContainsMine(x,y, gamestate));
     gamestate.tiles[x][y].is_mine = true;
+		printf("Placing mine at %d/%d\n", x, y);
+		for(int a = -1; a < 2; a++){
+			for (int b = -1; b < 2; b++){
+				if((a + x > -1) && (a + x < NUM_TILES_X)){
+					if((b + y > -1) && (b + y < NUM_TILES_Y)){
+						if(a!=x && b!=y){
+							gamestate.tiles[x][y].adjacent_mines++;
+						}
+					}
+				}
+			}
+		}
 	}
   return gamestate;
 }
+
+
+
+char *FormatGameState(struct GameState gamestate){
+	char gameString[MAXGAMESIZE];
+	for(int x = 0; x < NUM_TILES_X; x++){
+		for (int y = 0; y < NUM_TILES_Y; y++){
+			int loc;
+
+			loc = (x * NUM_TILES_X) + y;
+      if(gamestate.tiles[x][y].revealed == true){
+        strcpy(&gameString[loc], " ");
+				
+			} else{
+        strcpy(&gameString[loc], " ");
+
+			}
+		}
+	}
+
+	if(gamestate.minesLeft == 10){
+		strcpy(&gameString[82], "1");
+		strcpy(&gameString[83], "0");
+	}else {
+		strcpy(&gameString[82], "0");
+		char num[MAXDATASIZE];
+		sprintf(num, "%d", gamestate.minesLeft);
+		strcpy(&gameString[83], num);
+	}
+
+  char *returnStr = gameString;
+  return returnStr;
+
+}
+
 
 void SendLeaderboard(int socket, struct LeaderboardEntry *leaderboard) {
 	int time_count, won, played;
@@ -90,4 +157,4 @@ void SendLeaderboard(int socket, struct LeaderboardEntry *leaderboard) {
 		write(socket, &won, sizeof(won));
 		write(socket, &played, sizeof(played));	
 	}
-}
+
