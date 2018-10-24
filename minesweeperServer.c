@@ -114,20 +114,20 @@ char *FormatGameState(struct GameState gamestate){
 
 			loc = (x * NUM_TILES_X) + y;
 			if(gamestate.tiles[x][y].revealed == true){
-				gameString[loc] = " ";
+				strcpy(&gameString[loc], " ");
 			} else{
-				gameString[loc] = " ";
+				strcpy(&gameString[loc], " ");
 			}
 		}
 	}
 	if(gamestate.minesLeft == 10){
-		gameString[82] = "1";
-		gameString[83] = "0";
+		strcpy(&gameString[82], "1");
+		strcpy(&gameString[83], "0");
 	}else {
-		gameString[82] = "0";
+		strcpy(&gameString[82], "0");
 		char num[MAXDATASIZE];
 		sprintf(num, "%d", gamestate.minesLeft);
-		gameString[83] = num;
+		strcpy(&gameString[83], num);
 	}
 
 }
