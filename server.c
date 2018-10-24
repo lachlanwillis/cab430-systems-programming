@@ -44,11 +44,8 @@ void* ClientConnectionsHandler(void *);
 void HandleExitSignal();
 void ClientCommunicationHandler(int, char *[256]);
 int NumAuths(char *);
-<<<<<<< HEAD
-=======
-int TileContainsMine(int, int);
 void SendLeaderboard(int, struct LeaderboardEntry*);
->>>>>>> 98650a949e0cea6d44078d13f531ebce2d05db98
+
 
 // Setup server, client socket variables
 int serverListen, clientConnect, portNum;
@@ -207,10 +204,7 @@ void* ClientConnectionsHandler(void *args) {
 
 		if (strcmp("1", message) == 0){
 	    // Start Minesweeper
-<<<<<<< HEAD
-			MinesweeeperMenu();
-=======
->>>>>>> 98650a949e0cea6d44078d13f531ebce2d05db98
+			MinesweeeperMenu(socket_id);
 
 	  } else if (strcmp("2", message) == 0){
 	    // Show Leaderboard
@@ -229,25 +223,7 @@ void* ClientConnectionsHandler(void *args) {
 	// Generate Game State - TODO: Expand for multithreading
 	//struct GameState gameState1;
 }
-<<<<<<< HEAD
-=======
 
-int TileContainsMine(int x, int y) {
-	return 1;
-}
-
-// Place mines
-void PlaceMines(){
-	for (int i = 0; i < NUM_MINES; i++) {
-		int x, y;
-
-		do {
-			x = rand() % NUM_TILES_X;
-			y = rand() % NUM_TILES_Y;
-		} while (TileContainsMine(x,y));
-
-	}
-}
 
 void SendLeaderboard(int socket, struct LeaderboardEntry *leaderboard) {
 	int time_count, won, played;
@@ -260,7 +236,6 @@ void SendLeaderboard(int socket, struct LeaderboardEntry *leaderboard) {
 		SendData(socket, leaderboard[i].username, MAXDATASIZE);
 		write(socket, &time_count, sizeof(time_count));
 		write(socket, &won, sizeof(won));
-		write(socket, &played, sizeof(played));	
+		write(socket, &played, sizeof(played));
 	}
 }
->>>>>>> 98650a949e0cea6d44078d13f531ebce2d05db98

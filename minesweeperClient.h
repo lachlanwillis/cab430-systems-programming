@@ -10,5 +10,6 @@ void PlayMinesweeper(int);
 void ShowLeaderboard(int);
 void DrawGame();
 int ReceiveLeaderboard(int, int);
+char * ReceiveGameState(int);
 
-#endif //__MINESWEEPERCLIENT_H__ 
+#endif //__MINESWEEPERCLIENT_H__

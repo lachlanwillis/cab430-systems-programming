@@ -1,5 +1,5 @@
 CC = gcc
-LDFLAGS =
+LDFLAGS = -pthread
 
 # LIST ALL OUTPUT FILES WE WANT
 all: client server

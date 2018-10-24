@@ -6,6 +6,7 @@ int ReceiveData(int, char*, short);
 int SendData(int, char*, short);
 struct GameState PlaceMines();
 int TileContainsMine(int, int, struct GameState);
-void MinesweeperMenu();
+void MinesweeperMenu(int);
+char *FormatGameState(struct GameState);
 
 #endif //__MINESWEEPERSERVER_H__
