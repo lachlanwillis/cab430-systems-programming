@@ -196,10 +196,11 @@ void PlayMinesweeper(int serverSocket){
         printf("Enter tile coordinates: ");
         char* chosenTile;
         scanf("%s", chosenTile);
-
+        SendGameChoice(serverSocket, "p", chosenTile);
       } else if (strcmp("q", selectionOption) == 0){
         // User chose to quit
         playingGame = 0;
+        SendGameChoice(serverSocket, "q", "  ");
         system("clear");
         return;
 
@@ -251,4 +252,16 @@ char *ReceiveGameState(int serverSocket){
 	int shortRetval = ReceiveData(serverSocket, gameString, MAXGAMESIZE);
 	printf("Received Minesweeper Data\n");
 	return return_str;
+}
+
+
+void SendGameChoice(int serverSocket, char chosenOption, char tileLoc[2]){
+  int res;
+  char messageToSend[MAXDATASIZE];
+  strcpy(&messageToSend[0], chosenOption);
+  strcpy(&messageToSend[1], &tileLoc[0]);
+  strcpy(&messageToSend[2], &tileLoc[1]);
+
+  res = SendData(serverSocket, messageToSend, MAXDATASIZE);
+
 }

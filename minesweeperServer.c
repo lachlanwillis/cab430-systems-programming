@@ -42,6 +42,7 @@ void MinesweeeperMenu(int socket_id){
 		int shortRetval = -1;
 		char gameString[MAXGAMESIZE];
 		char ret[MAXDATASIZE];
+    char chosenOption[MAXGAMESIZE];
 		printf("Sending gamestate\n");
 		strcpy(gameString, FormatGameState(gamestate));
 		for(int i = 0; i < MAXGAMESIZE+1; i++){
@@ -50,6 +51,20 @@ void MinesweeeperMenu(int socket_id){
 		printf("\n");
 		shortRetval = SendData(socket_id, gameString, MAXGAMESIZE);
     playing = 0;
+    shortRetval = ReceiveData(socket_id, chosenOption, MAXGAMESIZE);
+
+    if (strcmp(&chosenOption[0], "r") == 0){
+      // Flip Tile
+      playing = 1;
+      printf("User chose to Flip Tile");
+    } else if (strcmp(&chosenOption[0], "p") == 0){
+      // Place Flag
+      printf("User chose to Place Flag");
+    } else if (strcmp(&chosenOption[0], "q") == 0){
+      // User chose to quit
+      playing = 0;
+      ("User chose to quit");
+    }
 	}
 }
 
@@ -126,6 +141,7 @@ char *FormatGameState(struct GameState gamestate){
         strcpy(&gameString[loc], " ");
 
 			}
+      printf("%s,", &gameString[loc]);
 		}
 	}
 
