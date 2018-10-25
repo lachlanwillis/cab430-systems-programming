@@ -67,6 +67,7 @@ void StartMinesweeper(int serverSocket) {
     if (chosenOption == 1){
       PlayMinesweeper(serverSocket);
     } else if(chosenOption == 2){
+      system("clear");
       ShowLeaderboard(serverSocket);
     } else if(chosenOption == 3){
       strcpy(message, "3");
@@ -163,11 +164,14 @@ void ShowLeaderboard(int serverSocket){
 
   // Show the leaderboard
   for (int i = 0; i < LEADERBOARD_SIZE; i++) {
-    fprintf(stderr, "%s - ", leaderboard[i].username);
-    fprintf(stderr, "%d - ", leaderboard[i].time);
-    fprintf(stderr, "%d - ", leaderboard[i].won);
-    fprintf(stderr, "%d\n", leaderboard[i].played);
+    if (leaderboard[i].username[0] != '\0') {
+      fprintf(stderr, "%s - ", leaderboard[i].username);
+      fprintf(stderr, "%d - ", leaderboard[i].time);
+      fprintf(stderr, "%d - ", leaderboard[i].won);
+      fprintf(stderr, "%d\n", leaderboard[i].played);
+    }
   }
+  fprintf(stderr, "\n");
 }
 
 // Start Playing the game Minesweeper
