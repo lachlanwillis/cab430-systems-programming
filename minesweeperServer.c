@@ -38,6 +38,7 @@ void MinesweeeperMenu(int socket_id){
   gamestate.minesLeft = NUM_MINES;
 	printf("Mines placed\n");
 	int playing = 1;
+
 	while(playing){
 		int shortRetval = -1;
 		char gameString[MAXGAMESIZE];
@@ -48,6 +49,7 @@ void MinesweeeperMenu(int socket_id){
 		for(int i = 0; i < MAXGAMESIZE+1; i++){
 			printf("%c,", gameString[i]);
 		}
+		
 		printf("\n");
 		shortRetval = SendData(socket_id, gameString, MAXGAMESIZE);
 
@@ -143,10 +145,10 @@ char *FormatGameState(struct GameState gamestate){
 
 			loc = (x * NUM_TILES_X) + y;
       if(gamestate.tiles[x][y].revealed == true){
-        strcpy(&gameString[loc], " ");
+        gameString[loc] = ' ';
 
 			} else{
-        strcpy(&gameString[loc], " ");
+        gameString[loc] = ' ';
 
 			}
       printf("%s,", &gameString[loc]);
@@ -154,18 +156,16 @@ char *FormatGameState(struct GameState gamestate){
 	}
 
 	if(gamestate.minesLeft == 10){
-		strcpy(&gameString[82], "1");
-		strcpy(&gameString[83], "0");
+		gameString[82] = '1';
+		gameString[83] = '0';
 	}else {
-		strcpy(&gameString[82], "0");
-		char num[MAXDATASIZE];
-		sprintf(num, "%d", gamestate.minesLeft);
-		strcpy(&gameString[83], num);
+		gameString[82] = ' ';
+		gameString[83] = gamestate.minesLeft;
 	}
 
   char *returnStr = gameString;
+	// strcpy(returnStr, gameString);
   return returnStr;
-
 }
 
 
