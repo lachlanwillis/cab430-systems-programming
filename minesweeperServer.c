@@ -61,8 +61,9 @@ void MinesweeeperMenu(int socket_id){
       printf("%s", &chosenOption[i]);
     }
     printf("\n");
-    printf("%s\n", &chosenOption[0]);
-		printf("%s\n", &chosenOption[1]);
+
+		// Convert String provided to int
+		int coords = strtol(&chosenOption[1], NULL, 10);
     if (strncmp(&chosenOption[0], "r", 1) == 0){
       // Flip Tile
       printf("User chose to Flip Tile\n");

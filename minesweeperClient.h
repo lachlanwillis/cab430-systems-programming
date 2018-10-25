@@ -11,6 +11,7 @@ void ShowLeaderboard(int);
 void DrawGame();
 int ReceiveLeaderboard(int, int);
 char * ReceiveGameState(int);
-void SendGameChoice(int, char*, char[]);
+void SendGameChoice(int, char*, int);
+int GetTileCoordinates();
 
 #endif //__MINESWEEPERCLIENT_H__

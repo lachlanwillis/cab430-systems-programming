@@ -5,10 +5,15 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <ctype.h>
+
 
 #define MAXDATASIZE 256
 #define LEADERBOARD_SIZE 10
 # define MAXGAMESIZE 83
+
+#define NUM_TILES_X 9
+#define NUM_TILES_Y 9
 
 int receivedData, sentData;
 char username[MAXDATASIZE], password[MAXDATASIZE];
@@ -191,22 +196,18 @@ void PlayMinesweeper(int serverSocket){
 
       if (strcmp("r", selectionOption) == 0){
         // User chose to reveal a tile
-        printf("Enter tile coordinates: ");
-        char chosenTile[256];
-        scanf("%s", chosenTile);
-        SendGameChoice(serverSocket, "r", chosenTile);
+				int coords = GetTileCoordinates();
+        SendGameChoice(serverSocket, "r", coords);
 
       } else if (strcmp("p", selectionOption) == 0){
         // User chose to place a flag
-        printf("Enter tile coordinates: ");
-        char* chosenTile;
-        scanf("%s", chosenTile);
-        SendGameChoice(serverSocket, "p", chosenTile);
+        int coords = GetTileCoordinates();
+        SendGameChoice(serverSocket, "p", coords);
 
       } else if (strcmp("q", selectionOption) == 0){
         // User chose to quit
         playingGame = 0;
-        SendGameChoice(serverSocket, "q", "  ");
+        SendGameChoice(serverSocket, "q", 0);
         system("clear");
         return;
 
@@ -223,7 +224,25 @@ int GetTileCoordinates(){
 		printf("Enter tile coordinates: ");
 		char chosenTile[256];
 		scanf("%s", chosenTile);
-		return 0;
+		// Convert letter to number
+		char letterResult = toupper(chosenTile[0]) - 'A' + 1;
+		int letterCoord = letterResult;
+		printf("%d\n", chosenTile[1]);
+		int numCoord = chosenTile[1] - 48;
+		
+		// Check to make sure letter and Number is in range
+		if(letterCoord < 1 || letterCoord > NUM_TILES_Y){
+			printf("Please enter a letter between A and I\n");
+		} else {
+			if (numCoord < 1 || numCoord > NUM_TILES_X){
+				printf("Please enter a number between 1 and 9\n");
+			} else {
+				printf("%d/%d\n", letterCoord, numCoord);
+				return(letterCoord*10+numCoord);
+			}
+
+		}
+
 	}
 }
 
@@ -274,11 +293,13 @@ char *ReceiveGameState(int serverSocket){
 }
 
 // Sends chosen tile and option to server.
-void SendGameChoice(int serverSocket, char* chosenOption, char tileLoc[2]){
+void SendGameChoice(int serverSocket, char* chosenOption, int tileLoc){
   int res;
+	char tileRes[64];
+	sprintf(tileRes, "%d", tileLoc);
   char messageToSend[MAXDATASIZE];
   strcpy(&messageToSend[0], chosenOption);
-  strcpy(&messageToSend[1], tileLoc);
+  strcpy(&messageToSend[1], tileRes);
   char *msg = messageToSend;
   printf("%s\n", msg);
   res = SendData(serverSocket, msg, MAXDATASIZE);
