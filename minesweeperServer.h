@@ -16,7 +16,7 @@ int SendData(int, char*, short);
 struct GameState PlaceMines();
 int TileContainsMine(int, int, struct GameState);
 void MinesweeperMenu(int);
-char *FormatGameState(struct GameState);
+void FormatGameState(struct GameState, char*);
 void SendLeaderboard(int, struct LeaderboardEntry*);
 
 

@@ -12,7 +12,7 @@
 #define NUM_MINES 10
 
 
-#define MAXGAMESIZE 84
+#define MAXGAMESIZE 83
 #define TOTAL_CONNECTIONS 10
 #define MAXDATASIZE 256
 
@@ -45,13 +45,13 @@ void MinesweeeperMenu(int socket_id){
 		char ret[MAXDATASIZE];
 
 		printf("Sending gamestate\n");
-		strcpy(gameString, FormatGameState(gamestate));
+		FormatGameState(gamestate, gameString);
 		for(int i = 0; i < MAXGAMESIZE+1; i++){
 			printf("%c,", gameString[i]);
 		}
-		
+
 		printf("\n");
-		shortRetval = SendData(socket_id, gameString, MAXGAMESIZE);
+		shortRetval = SendData(socket_id, gameString, MAXGAMESIZE+1);
 
     playing = 0;
     char chosenOption[8];
@@ -62,6 +62,7 @@ void MinesweeeperMenu(int socket_id){
     }
     printf("\n");
     printf("%s\n", &chosenOption[0]);
+		printf("%s\n", &chosenOption[1]);
     if (strncmp(&chosenOption[0], "r", 1) == 0){
       // Flip Tile
       printf("User chose to Flip Tile\n");
@@ -72,6 +73,7 @@ void MinesweeeperMenu(int socket_id){
       // User chose to quit
       playing = 0;
       printf("User chose to quit\n");
+			return;
     } else{
       printf("Error with string\n");
     }
@@ -112,6 +114,12 @@ int TileContainsMine(int x, int y, struct GameState gamestate) {
 // Place mines
 struct GameState PlaceMines(){
   struct GameState gamestate;
+  for(int x_tile = 0; x_tile < NUM_TILES_X; x_tile++){
+    for(int y_tile = 0; y_tile < NUM_TILES_Y; y_tile++){
+      gamestate.tiles[x_tile][y_tile].revealed = false;
+    }
+  }
+
 	for (int i = 0; i < NUM_MINES; i++) {
 		int x, y;
 		do {
@@ -137,13 +145,15 @@ struct GameState PlaceMines(){
 
 
 
-char *FormatGameState(struct GameState gamestate){
-	char gameString[MAXGAMESIZE];
+void FormatGameState(struct GameState gamestate, char* gameString){
+	for(int initial = 0; initial < MAXGAMESIZE; initial++){
+		gameString[initial] = ' ';
+	}
 	for(int x = 0; x < NUM_TILES_X; x++){
 		for (int y = 0; y < NUM_TILES_Y; y++){
 			int loc;
+			loc = x + (y * NUM_TILES_Y);
 
-			loc = (x * NUM_TILES_X) + y;
       if(gamestate.tiles[x][y].revealed == true){
         gameString[loc] = ' ';
 
@@ -151,7 +161,6 @@ char *FormatGameState(struct GameState gamestate){
         gameString[loc] = ' ';
 
 			}
-      printf("%s,", &gameString[loc]);
 		}
 	}
 
@@ -162,10 +171,6 @@ char *FormatGameState(struct GameState gamestate){
 		gameString[82] = ' ';
 		gameString[83] = gamestate.minesLeft;
 	}
-
-  char *returnStr = gameString;
-	// strcpy(returnStr, gameString);
-  return returnStr;
 }
 
 
@@ -182,4 +187,9 @@ void SendLeaderboard(int socket, struct LeaderboardEntry *leaderboard) {
 		write(socket, &won, sizeof(won));
 		write(socket, &played, sizeof(played));
 	}
+}
+
+
+void FlipTile(struct GameState gameState, char loc[2]){
+
 }

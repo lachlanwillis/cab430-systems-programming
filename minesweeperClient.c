@@ -8,7 +8,7 @@
 
 #define MAXDATASIZE 256
 #define LEADERBOARD_SIZE 10
-# define MAXGAMESIZE 84
+# define MAXGAMESIZE 83
 
 int receivedData, sentData;
 char username[MAXDATASIZE], password[MAXDATASIZE];
@@ -217,7 +217,18 @@ void PlayMinesweeper(int serverSocket){
   } while(playingGame);
 }
 
+// Prints commands to user and deciphers inputs.
+int GetTileCoordinates(){
+	while(1){
+		printf("Enter tile coordinates: ");
+		char chosenTile[256];
+		scanf("%s", chosenTile);
+		return 0;
+	}
+}
 
+
+// Draws the gamestate to the user with the provided char
 void DrawGame(char gameState[MAXGAMESIZE]){
 	printf("Drawing Game\n");
   char minesLeft[2];
@@ -232,12 +243,13 @@ void DrawGame(char gameState[MAXGAMESIZE]){
   printf("  ---------------------\n");
 
   for(x = 0; x < 9; x++){
+		// Convert number to ASCI to display GRID
     char row;
-    int asciCon = x+65;
+    int asciCon = x + 65;
     row = (char) asciCon;
     printf("  %c |", row);
     for(y = 0; y < 9; y++){
-
+			// Print the tiles
       printf(" %c", gameState[x*9+y]);
     }
     printf("\n");
@@ -251,22 +263,22 @@ void DrawGame(char gameState[MAXGAMESIZE]){
 
 }
 
+// Receives string with gamestate from server
 char *ReceiveGameState(int serverSocket){
 	char gameString[MAXGAMESIZE];
 	char *return_str = gameString;
 	printf("Receiving Data Minesweeper\n");
-	int shortRetval = ReceiveData(serverSocket, gameString, MAXGAMESIZE);
+	int shortRetval = ReceiveData(serverSocket, gameString, MAXGAMESIZE+1);
 	printf("Received Minesweeper Data\n");
 	return return_str;
 }
 
-
+// Sends chosen tile and option to server.
 void SendGameChoice(int serverSocket, char* chosenOption, char tileLoc[2]){
   int res;
   char messageToSend[MAXDATASIZE];
   strcpy(&messageToSend[0], chosenOption);
   strcpy(&messageToSend[1], tileLoc);
-  //strcat(messageToSend, tileLoc);
   char *msg = messageToSend;
   printf("%s\n", msg);
   res = SendData(serverSocket, msg, MAXDATASIZE);
