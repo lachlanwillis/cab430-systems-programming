@@ -42,7 +42,7 @@ void MinesweeeperMenu(int socket_id){
 		int shortRetval = -1;
 		char gameString[MAXGAMESIZE];
 		char ret[MAXDATASIZE];
-    char chosenOption[MAXGAMESIZE];
+
 		printf("Sending gamestate\n");
 		strcpy(gameString, FormatGameState(gamestate));
 		for(int i = 0; i < MAXGAMESIZE+1; i++){
@@ -50,20 +50,28 @@ void MinesweeeperMenu(int socket_id){
 		}
 		printf("\n");
 		shortRetval = SendData(socket_id, gameString, MAXGAMESIZE);
-    playing = 0;
-    shortRetval = ReceiveData(socket_id, chosenOption, MAXGAMESIZE);
 
-    if (strcmp(&chosenOption[0], "r") == 0){
+    playing = 0;
+    char chosenOption[8];
+    shortRetval = ReceiveData(socket_id, chosenOption, 8);
+    printf("Received Data\n");
+    for(int i = 0; i < 8; i++){
+      printf("%s", &chosenOption[i]);
+    }
+    printf("\n");
+    printf("%s\n", &chosenOption[0]);
+    if (strncmp(&chosenOption[0], "r", 1) == 0){
       // Flip Tile
-      playing = 1;
-      printf("User chose to Flip Tile");
-    } else if (strcmp(&chosenOption[0], "p") == 0){
+      printf("User chose to Flip Tile\n");
+    } else if (strncmp(&chosenOption[0], "p", 1) == 0){
       // Place Flag
-      printf("User chose to Place Flag");
-    } else if (strcmp(&chosenOption[0], "q") == 0){
+      printf("User chose to Place Flag\n");
+    } else if (strncmp(&chosenOption[0], "q", 1) == 0){
       // User chose to quit
       playing = 0;
-      ("User chose to quit");
+      printf("User chose to quit\n");
+    } else{
+      printf("Error with string\n");
     }
 	}
 }

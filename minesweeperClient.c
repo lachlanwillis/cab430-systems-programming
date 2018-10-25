@@ -188,8 +188,9 @@ void PlayMinesweeper(int serverSocket){
       if (strcmp("r", selectionOption) == 0){
         // User chose to reveal a tile
         printf("Enter tile coordinates: ");
-        char* chosenTile;
+        char chosenTile[256];
         scanf("%s", chosenTile);
+        SendGameChoice(serverSocket, "r", chosenTile);
 
       } else if (strcmp("p", selectionOption) == 0){
         // User chose to place a flag
@@ -197,6 +198,7 @@ void PlayMinesweeper(int serverSocket){
         char* chosenTile;
         scanf("%s", chosenTile);
         SendGameChoice(serverSocket, "p", chosenTile);
+
       } else if (strcmp("q", selectionOption) == 0){
         // User chose to quit
         playingGame = 0;
@@ -255,13 +257,13 @@ char *ReceiveGameState(int serverSocket){
 }
 
 
-void SendGameChoice(int serverSocket, char chosenOption, char tileLoc[2]){
+void SendGameChoice(int serverSocket, char* chosenOption, char tileLoc[2]){
   int res;
   char messageToSend[MAXDATASIZE];
   strcpy(&messageToSend[0], chosenOption);
-  strcpy(&messageToSend[1], &tileLoc[0]);
-  strcpy(&messageToSend[2], &tileLoc[1]);
-
-  res = SendData(serverSocket, messageToSend, MAXDATASIZE);
-
+  strcpy(&messageToSend[1], tileLoc);
+  //strcat(messageToSend, tileLoc);
+  char *msg = messageToSend;
+  printf("%s\n", msg);
+  res = SendData(serverSocket, msg, MAXDATASIZE);
 }
