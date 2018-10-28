@@ -18,6 +18,7 @@ int TileContainsMine(int, int, struct GameState);
 void MinesweeperMenu(int);
 void FormatGameState(struct GameState, char*);
 void SendLeaderboard(int, struct LeaderboardEntry*);
-
+void FlipTile(struct GameState*, int loc);
+void GameOverMsg(int, int);
 
 #endif //__MINESWEEPERSERVER_H__
