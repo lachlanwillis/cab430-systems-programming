@@ -6,6 +6,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <curses.h>
 
 
 #define MAXDATASIZE 256
@@ -26,6 +27,8 @@ struct LeaderboardEntry {
 };
 
 struct LeaderboardEntry leaderboard[LEADERBOARD_SIZE];
+
+char gameString[MAXGAMESIZE];
 
 // create functions here that are defined in the header
 void StartMinesweeper(int serverSocket) {
@@ -85,7 +88,7 @@ void StartMinesweeper(int serverSocket) {
 
 int DisplayMenu(int serverSocket){
   int selection = 0;
-  char selectionOption[256];
+  char selectionOption[MAXDATASIZE];
 
   while (selection == 0) {
     fprintf(stderr, "Please enter a selection:\n");
@@ -96,7 +99,7 @@ int DisplayMenu(int serverSocket){
 
     scanf("%s", selectionOption);
 
-    int shortRetval = SendData(serverSocket, selectionOption, strlen(selectionOption));
+    SendData(serverSocket, selectionOption, strlen(selectionOption));
 
     if (strcmp("1", selectionOption) == 0){
       // Start Minesweeper
@@ -141,7 +144,7 @@ int SendData(int serverSocket, char* message, short messageSize) {
 }
 
 int ReceiveLeaderboard(int socket, int size) {
-  int number_of_bytes;
+  int number_of_bytes = 0;
   int time_count = 0, played = 0, won = 0;
   char recv_username[MAXDATASIZE];
 
@@ -156,14 +159,27 @@ int ReceiveLeaderboard(int socket, int size) {
     leaderboard[i].won = ntohl(won);
     leaderboard[i].played = ntohl(played);
 	}
+
 	return number_of_bytes;
+}
+
+// Moves cursor to x y pos on terminal
+void gotoxy(int x, int y) {
+  printf("\033[%d;%df", y, x);
+  fflush(stdout);
 }
 
 // Displays the Leaderboard - Requires Communication to Server
 void ShowLeaderboard(int serverSocket){
-  fprintf(stderr, "=================================================================\n");
+  fprintf(stderr, "===========================================================================\n");
   fprintf(stderr, "Current Minesweeper Leaderboard\n");
-  fprintf(stderr, "=================================================================\n");
+  fprintf(stderr, "===========================================================================\n");
+  fprintf(stderr, "USERNAME");
+  gotoxy(20, 4);
+  fprintf(stderr, "BEST TIME");
+  gotoxy(40, 4);
+  fprintf(stderr, "GAMES WON / TOTAL PLAYED\n");
+  fprintf(stderr, "===========================================================================\n");
 
   int shortRetval = -1;
 
@@ -173,10 +189,12 @@ void ShowLeaderboard(int serverSocket){
   // Show the leaderboard
   for (int i = 0; i < LEADERBOARD_SIZE; i++) {
     if (leaderboard[i].username[0] != '\0') {
-      fprintf(stderr, "%s - ", leaderboard[i].username);
-      fprintf(stderr, "%d - ", leaderboard[i].time);
-      fprintf(stderr, "%d - ", leaderboard[i].won);
-      fprintf(stderr, "%d\n", leaderboard[i].played);
+      fprintf(stderr, "%s", leaderboard[i].username);
+      gotoxy(20, 6 + i);
+      fprintf(stderr, "%d seconds", leaderboard[i].time);
+      gotoxy(40, 6 + i);
+      fprintf(stderr, "%d games won, ", leaderboard[i].won);
+      fprintf(stderr, "%d games played\n", leaderboard[i].played);
     }
   }
   fprintf(stderr, "\n");
@@ -189,12 +207,16 @@ void PlayMinesweeper(int serverSocket){
 		int enteringOption = 1;
 		// Send message to sever requesting gameState
 		printf("Requesting Data from server\n");
-		int shortRetval = SendData(serverSocket, "1", MAXDATASIZE);
+		int shortRetval = -1;
+		shortRetval = SendData(serverSocket, "1", 1);
+		if (shortRetval < 0){
+			printf("Error communicating with server\n");
+		}
     // Get Data from Server here.
-		char gamestate[MAXGAMESIZE];
-		strcpy(gamestate, ReceiveGameState(serverSocket));
+		ReceiveGameState(serverSocket, gameString);
+		printf("Drawing Game: %s\n", gameString);
     // Draw Tiles
-    DrawGame(gamestate);
+    DrawGame(gameString);
 
     while(enteringOption){
       char selectionOption[256];
@@ -219,9 +241,8 @@ void PlayMinesweeper(int serverSocket){
         SendGameChoice(serverSocket, "q", 0);
         system("clear");
         return;
-
       } else {
-      printf("Did not enter Options R, P or Q.\n Please try again\n");
+        printf("Did not enter Options R, P or Q.\n Please try again\n");
       }
     }
   } while(playingGame);
@@ -255,23 +276,27 @@ int GetTileCoordinates(){
 
 
 // Draws the gamestate to the user with the provided char
-void DrawGame(char gameState[MAXGAMESIZE]){
+void DrawGame(char* gameState){
+  char* minesLeft;
+  int x, y, asciCon;
+  char row;
+
 	printf("Drawing Game\n");
-  char minesLeft[2];
-	if(strcmp(&gameState[82], "0") == 0){
-		strcpy(minesLeft, &gameState[MAXGAMESIZE]);
-	}else {
-		strcpy(minesLeft, "10");
+  system("clear");
+
+	if (gameState[82] == '0'){
+		minesLeft = &gameState[MAXDATASIZE];
+	} else {
+		minesLeft = "10";
 	}
-  int x, y;
+
   printf("Remaining mines: %s\n\n", minesLeft);
   printf("      1 2 3 4 5 6 7 8 9\n");
   printf("  ---------------------\n");
 
   for(x = 0; x < 9; x++){
 		// Convert number to ASCI to display GRID
-    char row;
-    int asciCon = x + 65;
+    asciCon = x + 65;
     row = (char) asciCon;
     printf("  %c |", row);
     for(y = 0; y < 9; y++){
@@ -290,23 +315,27 @@ void DrawGame(char gameState[MAXGAMESIZE]){
 }
 
 // Receives string with gamestate from server
-char *ReceiveGameState(int serverSocket){
-	char gameString[MAXGAMESIZE];
-	char *return_str = gameString;
-	printf("Receiving Data Minesweeper\n");
-	int shortRetval = ReceiveData(serverSocket, gameString, MAXGAMESIZE+1);
-	printf("Received Minesweeper Data\n");
-	return return_str;
+void ReceiveGameState(int serverSocket, char* gameString){
+	int recData = -1;
+	while(recData < 0){
+		printf("Receiving Data Minesweeper\n");
+		recData = ReceiveData(serverSocket, gameString, MAXGAMESIZE+1);
+		printf("Received Minesweeper Data\n");
+	}
+
 }
 
 // Sends chosen tile and option to server.
 void SendGameChoice(int serverSocket, char* chosenOption, int tileLoc){
   int res;
-	char tileRes[64];
+	char tileRes[64], messageToSend[MAXDATASIZE];
+  char *msg = messageToSend;
+
+  printf("SENDING GAME CHOICE");
 	sprintf(tileRes, "%d", tileLoc);
-  char messageToSend[MAXDATASIZE];
   strcpy(&messageToSend[0], chosenOption);
   strcpy(&messageToSend[1], tileRes);
-  char *msg = messageToSend;
+
+  printf("%s\n", msg);
   res = SendData(serverSocket, msg, MAXDATASIZE);
 }

@@ -14,10 +14,9 @@
 
 int main(int argc, char* argv[]){
   // Setup port and connection address
-  int portNum, clientConnect, connectionStatus, read_size;
+  int portNum, clientConnect;
   char * inetAddr;
   struct sockaddr_in serverAddress;
-  char message[MAXDATASIZE];
 
   if (argc == 3) {
     // User provided IP and Port

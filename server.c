@@ -35,7 +35,7 @@ void* ClientConnectionsHandler(void *);
 void HandleExitSignal();
 void ClientCommunicationHandler(int, char *[256]);
 int NumAuths(char *);
-
+void MinesweeperMenu(int);
 
 // Setup server, client socket variables
 int serverListen, clientConnect, portNum;
@@ -46,6 +46,10 @@ socklen_t sin_size;
 pthread_t client_thread;
 pthread_attr_t attr;
 
+// Setup leaderboard timing vars
+time_t start_time;
+time_t end_time;
+
 int main(int argc, char* argv[]) {
 	// Setup Handle Exit Signal
 	signal(SIGINT, HandleExitSignal);
@@ -55,6 +59,46 @@ int main(int argc, char* argv[]) {
 	leaderboard[0].played = 10;
 	leaderboard[0].time = 123;
 	leaderboard[0].won = 7;
+	// TEST LEADERBOARD USER
+	strcpy(leaderboard[1].username, "Test AA");
+	leaderboard[1].played = 10;
+	leaderboard[1].time = 123;
+	leaderboard[1].won = 7;
+	// TEST LEADERBOARD USER
+	strcpy(leaderboard[2].username, "Test 3");
+	leaderboard[2].played = 10;
+	leaderboard[2].time = 9999999;
+	leaderboard[2].won = 7;
+	// TEST LEADERBOARD USER
+	strcpy(leaderboard[3].username, "Test 4");
+	leaderboard[3].played = 10;
+	leaderboard[3].time = 13;
+	leaderboard[3].won = 7;
+	// TEST LEADERBOARD USER
+	strcpy(leaderboard[4].username, "Bcde");
+	leaderboard[4].played = 10;
+	leaderboard[4].time = 9999999;
+	leaderboard[4].won = 7;
+	// TEST LEADERBOARD USER
+	strcpy(leaderboard[5].username, "Test 5");
+	leaderboard[5].played = 1000;
+	leaderboard[5].time = 9999999;
+	leaderboard[5].won = 999;
+	// TEST LEADERBOARD USER
+	strcpy(leaderboard[6].username, "Abcd");
+	leaderboard[6].played = 10;
+	leaderboard[6].time = 9999999;
+	leaderboard[6].won = 7;
+	// TEST LEADERBOARD USER
+	strcpy(leaderboard[7].username, "Test 6");
+	leaderboard[7].played = 10;
+	leaderboard[7].time = 13;
+	leaderboard[7].won = 7;
+	// TEST LEADERBOARD USER
+	strcpy(leaderboard[8].username, "Test AAA");
+	leaderboard[8].played = 10;
+	leaderboard[8].time = 123;
+	leaderboard[8].won = 7;
 
 
 
@@ -190,13 +234,16 @@ void* ClientConnectionsHandler(void *args) {
 
 	int clientFinished = 0;
 	while(clientFinished != 1){
-		printf("Awaiting instruction from user\n");
-		int msg = ReceiveData(socket_id, message, MAXDATASIZE);
+		ReceiveData(socket_id, message, MAXDATASIZE);
 
 		if (strcmp("1", message) == 0){
 	    // Start Minesweeper
-			MinesweeeperMenu(socket_id);
-
+			start_time = time(NULL);
+			MinesweeperMenu(socket_id);
+			// TODO: THIS WILL CHANGE WHEN WE FINISH CODING END GAME
+			printf("ended, waiting for next command");
+			end_time = time(NULL);
+			int seconds_taken = difftime(start_time, end_time);
 	  } else if (strcmp("2", message) == 0){
 	    // Show Leaderboard
 			printf("Sending leaderboard\n");

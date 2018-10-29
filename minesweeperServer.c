@@ -6,6 +6,7 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <time.h>
 
 #define NUM_TILES_X 9
 #define NUM_TILES_Y 9
@@ -33,8 +34,9 @@ struct GameState {
 	Tile tiles[NUM_TILES_X] [NUM_TILES_Y];
 }GameState;
 
+char gameString[MAXGAMESIZE];
 
-void MinesweeeperMenu(int socket_id){
+void MinesweeperMenu(int socket_id){
 	// Seed the random number
 	srand(RANDOM_NUM_SEED);
 	// Create GameState
@@ -44,43 +46,50 @@ void MinesweeeperMenu(int socket_id){
   gamestate.minesLeft = NUM_MINES;
 	printf("Mines placed\n");
 	int playing = 1;
+	int shortRetval = -1;
+	char chosenOption[8];
 
 	while(playing){
 		int shortRetval = -1;
 		char gameString[MAXGAMESIZE];
-		char ret[MAXDATASIZE];
 		char clientReq[MAXDATASIZE];
 
 		int res = 1;
 
 		// Wait for client to request gameState
-		while(shortRetval = ReceiveData(socket_id, clientReq, MAXDATASIZE) > 0){
-			if (strncmp(clientReq, "1", 1) != 0){
-				printf("Error with request from client\n");
+		while(res){
+			shortRetval = ReceiveData(socket_id, clientReq, 1);
+			if (shortRetval < 0){
+
+			} else if (strncmp(clientReq, "1", 1) == 0){
+				res = 0;
 			}
 
 		}
 
 		printf("Sending gamestate\n");
 		FormatGameState(gamestate, gameString);
+
+		// Print gamestate
 		for(int i = 0; i < MAXGAMESIZE+1; i++){
 			printf("%c,", gameString[i]);
 		}
-
 		printf("\n");
+
+		// Send gamestate
 		shortRetval = SendData(socket_id, gameString, MAXGAMESIZE+1);
 
-    playing = 0;
-    char chosenOption[8];
+		// Wait for chosen option from client
     shortRetval = ReceiveData(socket_id, chosenOption, 8);
-    printf("Received Data\n");
-    for(int i = 0; i < 8; i++){
-      printf("%s", &chosenOption[i]);
-    }
+		char choice[strlen(chosenOption)];
+		strcpy(choice, chosenOption);
+
+    printf("Received Data: %s", choice);
     printf("\n");
 
 		// Convert String provided to int
-		int coords = strtol(&chosenOption[1], NULL, 10);
+		strtol(&chosenOption[1], NULL, 10);
+		int coords = chosenOption[1];
     if (strncmp(&chosenOption[0], "r", 1) == 0){
       // Flip Tile
       printf("User chose to Flip Tile\n");
@@ -93,8 +102,8 @@ void MinesweeeperMenu(int socket_id){
       // User chose to quit
       playing = 0;
       printf("User chose to quit\n");
-			return;
-    } else{
+			break;
+    } else {
       printf("Error with string\n");
     }
 	}
@@ -176,10 +185,11 @@ void FormatGameState(struct GameState gamestate, char* gameString){
 		for (int y = 0; y < NUM_TILES_Y; y++){
 			int loc;
 			loc = x + (y * NUM_TILES_Y);
-
+			printf("This tile has %d nearby mines and revealed = %d\n", gamestate.tiles[x][y].adjacent_mines, gamestate.tiles[x][y].revealed);
       if(gamestate.tiles[x][y].revealed == true){
 				printf("Tile %d/%d is revealed\n", x, y);
         gameString[loc] = gamestate.tiles[x][y].adjacent_mines;
+				printf("Nearby Mines = %s\n", &gameString[loc]);
 
 			}else{
         gameString[loc] = ' ';
@@ -197,9 +207,56 @@ void FormatGameState(struct GameState gamestate, char* gameString){
 	}
 }
 
+void SortLeaderboard(struct LeaderboardEntry *leaderboard) {
+	int x = 0, y;
+	struct LeaderboardEntry temp;
+
+	for (y = 0; y <= x; y++) {
+		for(x = 0; x < sizeof(leaderboard); x++) {
+			if (leaderboard[x].time < leaderboard[x + 1].time) {
+				// Time is less, reorder
+				temp = leaderboard[x];
+				leaderboard[x] = leaderboard[x + 1];
+				leaderboard[x + 1] = temp;
+			} else if (leaderboard[x].time == leaderboard[x + 1].time) {
+				// Time is equal, check total won
+				if (leaderboard[x].won > leaderboard[x + 1].won) {
+					// Total won is less, reorder
+					temp = leaderboard[x];
+					leaderboard[x] = leaderboard[x + 1];
+					leaderboard[x + 1] = temp;
+				} else if (leaderboard[x].won == leaderboard[x + 1].won) {
+					// Total win is equal, check alphabetical by username
+					int username_length = 0;
+
+					// Determine the bigger username
+					if (strlen(leaderboard[x].username) >= strlen(leaderboard[x + 1].username)) {
+						username_length = strlen(leaderboard[x].username);
+					} else {
+						username_length = strlen(leaderboard[x + 1].username);
+					}
+
+					// Iterate through each char and compare
+					for (int i = 0; i < username_length; i++) {
+						if (leaderboard[x].username[i] < leaderboard[x + 1].username[i]) {
+							// Reorder to alphabetical order
+							temp = leaderboard[x];
+							leaderboard[x] = leaderboard[x + 1];
+							leaderboard[x + 1] = temp;
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
 
 void SendLeaderboard(int socket, struct LeaderboardEntry *leaderboard) {
 	int time_count, won, played;
+
+	SortLeaderboard(leaderboard);
+	fprintf(stderr, "Leaderboard Sorted\n");
 
 	for (int i = 0; i < TOTAL_CONNECTIONS; i++) {
 		time_count = htonl(leaderboard[i].time);
