@@ -301,7 +301,7 @@ void DrawGame(char* gameState){
     printf("  %c |", row);
     for(y = 0; y < 9; y++){
 			// Print the tiles
-      printf(" %c", gameState[x*9+y]);
+      printf(" %c", gameState[(x)*9 + (y)]);
     }
     printf("\n");
   }

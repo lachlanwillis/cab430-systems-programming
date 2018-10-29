@@ -60,11 +60,9 @@ void MinesweeperMenu(int socket_id){
 		while(res){
 			shortRetval = ReceiveData(socket_id, clientReq, 1);
 			if (shortRetval < 0){
-
 			} else if (strncmp(clientReq, "1", 1) == 0){
 				res = 0;
 			}
-
 		}
 
 		printf("Sending gamestate\n");
@@ -86,14 +84,13 @@ void MinesweeperMenu(int socket_id){
 
     printf("Received Data: %s", choice);
     printf("\n");
-
+		printf("%c,%c\n", chosenOption[1], chosenOption[2]);
 		// Convert String provided to int
-		strtol(&chosenOption[1], NULL, 10);
-		int coords = chosenOption[1];
+		//strtol(&chosenOption[1], NULL, 10);
     if (strncmp(&chosenOption[0], "r", 1) == 0){
       // Flip Tile
       printf("User chose to Flip Tile\n");
-			FlipTile(&gamestate, coords);
+			FlipTile(&gamestate, chosenOption[1], chosenOption[2]);
 			playing = 1;
     } else if (strncmp(&chosenOption[0], "p", 1) == 0){
       // Place Flag
@@ -147,6 +144,7 @@ struct GameState PlaceMines(){
     for(int y_tile = 0; y_tile < NUM_TILES_Y; y_tile++){
       gamestate.tiles[x_tile][y_tile].revealed = false;
 			gamestate.tiles[x_tile][y_tile].adjacent_mines = 0;
+			gamestate.tiles[x_tile][y_tile].is_mine = false;
     }
   }
 
@@ -181,14 +179,17 @@ void FormatGameState(struct GameState gamestate, char* gameString){
 		gameString[initial] = ' ';
 	}
 	// Loop through each element and set it to the appropriate value
+
 	for(int x = 0; x < NUM_TILES_X; x++){
 		for (int y = 0; y < NUM_TILES_Y; y++){
+			printf("%d/%d: ", x, y);
 			int loc;
-			loc = x + (y * NUM_TILES_Y);
-			printf("This tile has %d nearby mines and revealed = %d\n", gamestate.tiles[x][y].adjacent_mines, gamestate.tiles[x][y].revealed);
+			loc = x * NUM_TILES_X + y;
+			printf("%d, ", loc);
+			//printf("This tile has %d nearby mines and revealed = %d\n", gamestate.tiles[x][y].adjacent_mines, gamestate.tiles[x][y].revealed);
       if(gamestate.tiles[x][y].revealed == true){
 				printf("Tile %d/%d is revealed\n", x, y);
-        gameString[loc] = gamestate.tiles[x][y].adjacent_mines;
+        gameString[loc] = 'X';
 				printf("Nearby Mines = %s\n", &gameString[loc]);
 
 			}else{
@@ -271,13 +272,14 @@ void SendLeaderboard(int socket, struct LeaderboardEntry *leaderboard) {
 }
 
 
-void FlipTile(struct GameState *gameState, int loc){
+void FlipTile(struct GameState *gameState, int loc_x, int loc_y){
 	int x_tile, y_tile;
-	x_tile = loc/10;
-	y_tile = loc - x_tile*10;
+	x_tile = loc_x - 49;
+	y_tile = loc_y - 49;
 	// Check to see if tile is a mine
 	if( (*gameState).tiles[x_tile][y_tile].is_mine == true){
 		// Game Over
+		printf("Game Over: Mine at %d/%d\n", x_tile, y_tile);
 		(*gameState).GameOver = true;
 	} else {
 		// If tile is not a mine - flip the tile, to reveal number below
