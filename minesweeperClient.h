@@ -10,8 +10,9 @@ void PlayMinesweeper(int);
 void ShowLeaderboard(int);
 void DrawGame();
 int ReceiveLeaderboard(int, int);
-char * ReceiveGameState(int);
+void ReceiveGameState(int, char*);
 void SendGameChoice(int, char*, int);
 int GetTileCoordinates();
+void gotoxy(int, int);
 
 #endif //__MINESWEEPERCLIENT_H__

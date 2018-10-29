@@ -6,6 +6,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <curses.h>
 
 
 #define MAXDATASIZE 256
@@ -26,6 +27,8 @@ struct LeaderboardEntry {
 };
 
 struct LeaderboardEntry leaderboard[LEADERBOARD_SIZE];
+
+char gameString[MAXGAMESIZE];
 
 // create functions here that are defined in the header
 void StartMinesweeper(int serverSocket) {
@@ -156,11 +159,23 @@ int ReceiveLeaderboard(int socket, int size) {
 	return number_of_bytes;
 }
 
+// Moves cursor to x y pos on terminal
+void gotoxy(int x, int y) {
+  printf("\033[%d;%df", y, x);
+  fflush(stdout);
+}
+
 // Displays the Leaderboard - Requires Communication to Server
 void ShowLeaderboard(int serverSocket){
-  fprintf(stderr, "=================================================================\n");
+  fprintf(stderr, "===========================================================================\n");
   fprintf(stderr, "Current Minesweeper Leaderboard\n");
-  fprintf(stderr, "=================================================================\n");
+  fprintf(stderr, "===========================================================================\n");
+  fprintf(stderr, "USERNAME");
+  gotoxy(20, 4);
+  fprintf(stderr, "BEST TIME");
+  gotoxy(40, 4);
+  fprintf(stderr, "GAMES WON / TOTAL PLAYED\n");
+  fprintf(stderr, "===========================================================================\n");
 
   int shortRetval = -1;
 
@@ -170,10 +185,12 @@ void ShowLeaderboard(int serverSocket){
   // Show the leaderboard
   for (int i = 0; i < LEADERBOARD_SIZE; i++) {
     if (leaderboard[i].username[0] != '\0') {
-      fprintf(stderr, "%s - ", leaderboard[i].username);
-      fprintf(stderr, "%d - ", leaderboard[i].time);
-      fprintf(stderr, "%d - ", leaderboard[i].won);
-      fprintf(stderr, "%d\n", leaderboard[i].played);
+      fprintf(stderr, "%s", leaderboard[i].username);
+      gotoxy(20, 6 + i);
+      fprintf(stderr, "%d seconds", leaderboard[i].time);
+      gotoxy(40, 6 + i);
+      fprintf(stderr, "%d games won, ", leaderboard[i].won);
+      fprintf(stderr, "%d games played\n", leaderboard[i].played);
     }
   }
   fprintf(stderr, "\n");
@@ -185,10 +202,10 @@ void PlayMinesweeper(int serverSocket){
   do {
     // Get Data from Server here.
 		char gamestate[MAXGAMESIZE];
-		strcpy(gamestate, ReceiveGameState(serverSocket));
-		printf("Drawing Game\n");
+		ReceiveGameState(serverSocket, gameString);
+		printf("Drawing Game: %s\n", gameString);
     // Draw Tiles
-    DrawGame(gamestate);
+    DrawGame(gameString);
 
     while(enteringOption){
       char selectionOption[256];
@@ -248,23 +265,27 @@ int GetTileCoordinates(){
 
 
 // Draws the gamestate to the user with the provided char
-void DrawGame(char gameState[MAXGAMESIZE]){
+void DrawGame(char* gameState){
+  char* minesLeft;
+  int x, y, asciCon;
+  char row;
+
 	printf("Drawing Game\n");
-  char minesLeft[2];
-	if(strcmp(&gameState[82], "0") == 0){
-		strcpy(minesLeft, &gameState[MAXGAMESIZE]);
-	}else {
-		strcpy(minesLeft, "10");
+  system("clear");
+
+	if (gameState[82] == '0'){
+		minesLeft = gameState[MAXDATASIZE];
+	} else {
+		minesLeft = "10";
 	}
-  int x, y;
+
   printf("Remaining mines: %s\n\n", minesLeft);
   printf("      1 2 3 4 5 6 7 8 9\n");
   printf("  ---------------------\n");
 
   for(x = 0; x < 9; x++){
 		// Convert number to ASCI to display GRID
-    char row;
-    int asciCon = x + 65;
+    asciCon = x + 65;
     row = (char) asciCon;
     printf("  %c |", row);
     for(y = 0; y < 9; y++){
@@ -283,13 +304,10 @@ void DrawGame(char gameState[MAXGAMESIZE]){
 }
 
 // Receives string with gamestate from server
-char *ReceiveGameState(int serverSocket){
-	char gameString[MAXGAMESIZE];
-	char *return_str = gameString;
+void ReceiveGameState(int serverSocket, char* gameString){
 	printf("Receiving Data Minesweeper\n");
 	int shortRetval = ReceiveData(serverSocket, gameString, MAXGAMESIZE+1);
 	printf("Received Minesweeper Data\n");
-	return return_str;
 }
 
 // Sends chosen tile and option to server.

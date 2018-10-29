@@ -6,6 +6,7 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <time.h>
 
 #define NUM_TILES_X 9
 #define NUM_TILES_Y 9
@@ -30,6 +31,8 @@ struct GameState {
 	Tile tiles[NUM_TILES_X] [NUM_TILES_Y];
 }GameState;
 
+char gameString[MAXGAMESIZE];
+
 
 void MinesweeeperMenu(int socket_id){
   struct GameState gamestate;
@@ -41,7 +44,6 @@ void MinesweeeperMenu(int socket_id){
 
 	while(playing){
 		int shortRetval = -1;
-		char gameString[MAXGAMESIZE];
 		char ret[MAXDATASIZE];
 
 		printf("Sending gamestate\n");
@@ -174,9 +176,56 @@ void FormatGameState(struct GameState gamestate, char* gameString){
 	}
 }
 
+void SortLeaderboard(struct LeaderboardEntry *leaderboard) {
+	int x, y;
+	struct LeaderboardEntry temp;
+
+	for (y = 0; y <= x; y++) {
+		for(x = 0; x < sizeof(leaderboard); x++) {
+			if (leaderboard[x].time < leaderboard[x + 1].time) {
+				// Time is less, reorder
+				temp = leaderboard[x];
+				leaderboard[x] = leaderboard[x + 1];
+				leaderboard[x + 1] = temp;
+			} else if (leaderboard[x].time == leaderboard[x + 1].time) {
+				// Time is equal, check total won
+				if (leaderboard[x].won > leaderboard[x + 1].won) {
+					// Total won is less, reorder
+					temp = leaderboard[x];
+					leaderboard[x] = leaderboard[x + 1];
+					leaderboard[x + 1] = temp;
+				} else if (leaderboard[x].won == leaderboard[x + 1].won) {
+					// Total win is equal, check alphabetical by username
+					int username_length = 0;
+
+					// Determine the bigger username
+					if (strlen(leaderboard[x].username) >= strlen(leaderboard[x + 1].username)) {
+						username_length = strlen(leaderboard[x].username);
+					} else {
+						username_length = strlen(leaderboard[x + 1].username);
+					}
+
+					// Iterate through each char and compare
+					for (int i = 0; i < username_length; i++) {
+						if (leaderboard[x].username[i] < leaderboard[x + 1].username[i]) {
+							// Reorder to alphabetical order
+							temp = leaderboard[x];
+							leaderboard[x] = leaderboard[x + 1];
+							leaderboard[x + 1] = temp;
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
 
 void SendLeaderboard(int socket, struct LeaderboardEntry *leaderboard) {
 	int time_count, won, played;
+
+	SortLeaderboard(leaderboard);
+	fprintf(stderr, "Leaderboard Sorted\n");
 
 	for (int i = 0; i < TOTAL_CONNECTIONS; i++) {
 		time_count = htonl(leaderboard[i].time);
