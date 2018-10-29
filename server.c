@@ -20,7 +20,6 @@
 
 #include "minesweeperServer.h"
 
-#define RANDOM_NUM_SEED 42
 
 #define NUM_TILES_X 9
 #define NUM_TILES_Y 9
@@ -36,6 +35,7 @@ void* ClientConnectionsHandler(void *);
 void HandleExitSignal();
 void ClientCommunicationHandler(int, char *[256]);
 int NumAuths(char *);
+void MinesweeperMenu(int);
 
 // Setup server, client socket variables
 int serverListen, clientConnect, portNum;
@@ -100,8 +100,7 @@ int main(int argc, char* argv[]) {
 	leaderboard[8].time = 123;
 	leaderboard[8].won = 7;
 
-	// Seed the random number
-	srand(RANDOM_NUM_SEED);
+
 
 	// Handle Port Connection
 	if (argc < 2) {
@@ -227,11 +226,12 @@ void* ClientConnectionsHandler(void *args) {
 			strcpy(loginMessage, "0");
 		}
 		resMes = SendData(socket_id, message, MAXDATASIZE);
-		printf("Client logged in successfully\n");
+
 	}
 
+	printf("Client logged in successfully\n");
 	// Await information on what the client wishes to do
-	printf("Awaiting instruction from user\n");
+
 	int clientFinished = 0;
 	while(clientFinished != 1){
 		ReceiveData(socket_id, message, MAXDATASIZE);

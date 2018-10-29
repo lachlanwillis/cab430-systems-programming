@@ -119,6 +119,8 @@ int DisplayMenu(int serverSocket){
   return selection;
 }
 
+
+// General purpose function for receiving data from server
 int ReceiveData(int serverSocket, char* message, short messageSize) {
   int shortRetval = -1;
 
@@ -130,6 +132,7 @@ int ReceiveData(int serverSocket, char* message, short messageSize) {
   return shortRetval;
 }
 
+// General purpose function for sending data to server
 int SendData(int serverSocket, char* message, short messageSize) {
   int shortRetval = -1;
 
@@ -199,8 +202,16 @@ void ShowLeaderboard(int serverSocket){
 
 // Start Playing the game Minesweeper
 void PlayMinesweeper(int serverSocket){
-  int playingGame = 1, enteringOption = 1;
+  int playingGame = 1;
   do {
+		int enteringOption = 1;
+		// Send message to sever requesting gameState
+		printf("Requesting Data from server\n");
+		int shortRetval = -1;
+		shortRetval = SendData(serverSocket, "1", 1);
+		if (shortRetval < 0){
+			printf("Error communicating with server\n");
+		}
     // Get Data from Server here.
 		ReceiveGameState(serverSocket, gameString);
 		printf("Drawing Game: %s\n", gameString);
@@ -215,10 +226,15 @@ void PlayMinesweeper(int serverSocket){
         // User chose to reveal a tile
 				int coords = GetTileCoordinates();
         SendGameChoice(serverSocket, "r", coords);
+				printf("Sent data to server\n");
+				enteringOption = 0;
+
       } else if (strcmp("p", selectionOption) == 0){
         // User chose to place a flag
         int coords = GetTileCoordinates();
         SendGameChoice(serverSocket, "p", coords);
+				enteringOption = 0;
+
       } else if (strcmp("q", selectionOption) == 0){
         // User chose to quit
         playingGame = 0;
@@ -241,9 +257,8 @@ int GetTileCoordinates(){
 		// Convert letter to number
 		char letterResult = toupper(chosenTile[0]) - 'A' + 1;
 		int letterCoord = letterResult;
-		printf("%d\n", chosenTile[1]);
 		int numCoord = chosenTile[1] - 48;
-		
+
 		// Check to make sure letter and Number is in range
 		if(letterCoord < 1 || letterCoord > NUM_TILES_Y){
 			printf("Please enter a letter between A and I\n");
@@ -251,7 +266,6 @@ int GetTileCoordinates(){
 			if (numCoord < 1 || numCoord > NUM_TILES_X){
 				printf("Please enter a number between 1 and 9\n");
 			} else {
-				printf("%d/%d\n", letterCoord, numCoord);
 				return(letterCoord*10+numCoord);
 			}
 
@@ -287,7 +301,7 @@ void DrawGame(char* gameState){
     printf("  %c |", row);
     for(y = 0; y < 9; y++){
 			// Print the tiles
-      printf(" %c", gameState[x*9+y]);
+      printf(" %c", gameState[(x)*9 + (y)]);
     }
     printf("\n");
   }
@@ -302,9 +316,13 @@ void DrawGame(char* gameState){
 
 // Receives string with gamestate from server
 void ReceiveGameState(int serverSocket, char* gameString){
-	printf("Receiving Data Minesweeper\n");
-	ReceiveData(serverSocket, gameString, MAXGAMESIZE+1);
-	printf("Received Minesweeper Data\n");
+	int recData = -1;
+	while(recData < 0){
+		printf("Receiving Data Minesweeper\n");
+		recData = ReceiveData(serverSocket, gameString, MAXGAMESIZE+1);
+		printf("Received Minesweeper Data\n");
+	}
+
 }
 
 // Sends chosen tile and option to server.

@@ -12,6 +12,7 @@
 #define NUM_TILES_Y 9
 #define NUM_MINES 10
 
+#define RANDOM_NUM_SEED 42
 
 #define MAXGAMESIZE 83
 #define TOTAL_CONNECTIONS 10
@@ -19,7 +20,7 @@
 
 // Define what a tile is
 typedef struct Tile{
-
+	bool flag_placed;
 	int adjacent_mines;
 	bool revealed;
 	bool is_mine;
@@ -27,14 +28,18 @@ typedef struct Tile{
 
 struct GameState {
 	// More here
+
+	bool GameOver;
   int minesLeft;
 	Tile tiles[NUM_TILES_X] [NUM_TILES_Y];
 }GameState;
 
 char gameString[MAXGAMESIZE];
 
-
 void MinesweeperMenu(int socket_id){
+	// Seed the random number
+	srand(RANDOM_NUM_SEED);
+	// Create GameState
   struct GameState gamestate;
 	printf("Placing Mines\n");
   gamestate = PlaceMines();
@@ -45,6 +50,21 @@ void MinesweeperMenu(int socket_id){
 	char chosenOption[8];
 
 	while(playing){
+		int shortRetval = -1;
+		char gameString[MAXGAMESIZE];
+		char clientReq[MAXDATASIZE];
+
+		int res = 1;
+
+		// Wait for client to request gameState
+		while(res){
+			shortRetval = ReceiveData(socket_id, clientReq, 1);
+			if (shortRetval < 0){
+			} else if (strncmp(clientReq, "1", 1) == 0){
+				res = 0;
+			}
+		}
+
 		printf("Sending gamestate\n");
 		FormatGameState(gamestate, gameString);
 
@@ -64,12 +84,14 @@ void MinesweeperMenu(int socket_id){
 
     printf("Received Data: %s", choice);
     printf("\n");
-
+		printf("%c,%c\n", chosenOption[1], chosenOption[2]);
 		// Convert String provided to int
-		strtol(&chosenOption[1], NULL, 10);
+		//strtol(&chosenOption[1], NULL, 10);
     if (strncmp(&chosenOption[0], "r", 1) == 0){
       // Flip Tile
       printf("User chose to Flip Tile\n");
+			FlipTile(&gamestate, chosenOption[1], chosenOption[2]);
+			playing = 1;
     } else if (strncmp(&chosenOption[0], "p", 1) == 0){
       // Place Flag
       printf("User chose to Place Flag\n");
@@ -78,7 +100,7 @@ void MinesweeperMenu(int socket_id){
       playing = 0;
       printf("User chose to quit\n");
 			break;
-    } else{
+    } else {
       printf("Error with string\n");
     }
 	}
@@ -109,9 +131,9 @@ int SendData(int serverSocket, char* message, short messageSize) {
 
 int TileContainsMine(int x, int y, struct GameState gamestate) {
 	if(gamestate.tiles[x][y].is_mine){
-    return 0;
-  } else {
     return 1;
+  } else {
+    return 0;
   }
 }
 
@@ -121,6 +143,8 @@ struct GameState PlaceMines(){
   for(int x_tile = 0; x_tile < NUM_TILES_X; x_tile++){
     for(int y_tile = 0; y_tile < NUM_TILES_Y; y_tile++){
       gamestate.tiles[x_tile][y_tile].revealed = false;
+			gamestate.tiles[x_tile][y_tile].adjacent_mines = 0;
+			gamestate.tiles[x_tile][y_tile].is_mine = false;
     }
   }
 
@@ -148,20 +172,23 @@ struct GameState PlaceMines(){
 }
 
 
-
+// Prepare the gamestate into an easy to communicate gameString
 void FormatGameState(struct GameState gamestate, char* gameString){
+	// initialise the string to be empty
 	for(int initial = 0; initial < MAXGAMESIZE; initial++){
 		gameString[initial] = ' ';
 	}
+	// Loop through each element and set it to the appropriate value
+
 	for(int x = 0; x < NUM_TILES_X; x++){
 		for (int y = 0; y < NUM_TILES_Y; y++){
 			int loc;
-			loc = x + (y * NUM_TILES_Y);
-
+			loc = x * NUM_TILES_X + y;
+			//printf("This tile has %d nearby mines and revealed = %d\n", gamestate.tiles[x][y].adjacent_mines, gamestate.tiles[x][y].revealed);
       if(gamestate.tiles[x][y].revealed == true){
-        gameString[loc] = ' ';
-
-			} else{
+				printf("Tile %d/%d is revealed\n", x, y);
+				sprintf(&gameString[loc], "%d", gamestate.tiles[x][y].adjacent_mines);
+			}else{
         gameString[loc] = ' ';
 
 			}
@@ -241,6 +268,38 @@ void SendLeaderboard(int socket, struct LeaderboardEntry *leaderboard) {
 }
 
 
-void FlipTile(struct GameState gameState, char loc[2]){
+void FlipTile(struct GameState *gameState, int loc_x, int loc_y){
+	int x_tile, y_tile;
+	x_tile = loc_x - 49;
+	y_tile = loc_y - 49;
+	// Check to see if tile is a mine
+	if( (*gameState).tiles[x_tile][y_tile].is_mine == true){
+		// Game Over
+		printf("Game Over: Mine at %d/%d\n", x_tile, y_tile);
+		(*gameState).GameOver = true;
+	} else {
+		// If tile is not a mine - flip the tile, to reveal number below
+		(*gameState).tiles[x_tile][y_tile].revealed = true;
+		printf("Flipped Tile %d/%d\n", x_tile,y_tile);
+	}
+
+	// If tile is a 0, flip the tiles around it. Repeat (Most likely call FlipTile for the tiles around)
+
+}
+
+
+
+void FlagTile(struct GameState *gameState, int loc){
+
+
+}
+
+void GameOverMsg(int time, int won){
+	if (won){
+		// Send Congrats
+
+	} else {
+		// Send Gameover
+	}
 
 }
