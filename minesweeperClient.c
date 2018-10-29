@@ -88,7 +88,7 @@ void StartMinesweeper(int serverSocket) {
 
 int DisplayMenu(int serverSocket){
   int selection = 0;
-  char selectionOption[256];
+  char selectionOption[MAXDATASIZE];
 
   while (selection == 0) {
     fprintf(stderr, "Please enter a selection:\n");
@@ -99,7 +99,7 @@ int DisplayMenu(int serverSocket){
 
     scanf("%s", selectionOption);
 
-    int shortRetval = SendData(serverSocket, selectionOption, strlen(selectionOption));
+    SendData(serverSocket, selectionOption, strlen(selectionOption));
 
     if (strcmp("1", selectionOption) == 0){
       // Start Minesweeper
@@ -141,7 +141,7 @@ int SendData(int serverSocket, char* message, short messageSize) {
 }
 
 int ReceiveLeaderboard(int socket, int size) {
-  int number_of_bytes;
+  int number_of_bytes = 0;
   int time_count = 0, played = 0, won = 0;
   char recv_username[MAXDATASIZE];
 
@@ -156,6 +156,7 @@ int ReceiveLeaderboard(int socket, int size) {
     leaderboard[i].won = ntohl(won);
     leaderboard[i].played = ntohl(played);
 	}
+
 	return number_of_bytes;
 }
 
@@ -201,7 +202,6 @@ void PlayMinesweeper(int serverSocket){
   int playingGame = 1, enteringOption = 1;
   do {
     // Get Data from Server here.
-		char gamestate[MAXGAMESIZE];
 		ReceiveGameState(serverSocket, gameString);
 		printf("Drawing Game: %s\n", gameString);
     // Draw Tiles
@@ -215,21 +215,18 @@ void PlayMinesweeper(int serverSocket){
         // User chose to reveal a tile
 				int coords = GetTileCoordinates();
         SendGameChoice(serverSocket, "r", coords);
-
       } else if (strcmp("p", selectionOption) == 0){
         // User chose to place a flag
         int coords = GetTileCoordinates();
         SendGameChoice(serverSocket, "p", coords);
-
       } else if (strcmp("q", selectionOption) == 0){
         // User chose to quit
         playingGame = 0;
         SendGameChoice(serverSocket, "q", 0);
         system("clear");
         return;
-
       } else {
-      printf("Did not enter Options R, P or Q.\n Please try again\n");
+        printf("Did not enter Options R, P or Q.\n Please try again\n");
       }
     }
   } while(playingGame);
@@ -274,7 +271,7 @@ void DrawGame(char* gameState){
   system("clear");
 
 	if (gameState[82] == '0'){
-		minesLeft = gameState[MAXDATASIZE];
+		minesLeft = &gameState[MAXDATASIZE];
 	} else {
 		minesLeft = "10";
 	}
@@ -306,19 +303,21 @@ void DrawGame(char* gameState){
 // Receives string with gamestate from server
 void ReceiveGameState(int serverSocket, char* gameString){
 	printf("Receiving Data Minesweeper\n");
-	int shortRetval = ReceiveData(serverSocket, gameString, MAXGAMESIZE+1);
+	ReceiveData(serverSocket, gameString, MAXGAMESIZE+1);
 	printf("Received Minesweeper Data\n");
 }
 
 // Sends chosen tile and option to server.
 void SendGameChoice(int serverSocket, char* chosenOption, int tileLoc){
   int res;
-	char tileRes[64];
+	char tileRes[64], messageToSend[MAXDATASIZE];
+  char *msg = messageToSend;
+
+  printf("SENDING GAME CHOICE");
 	sprintf(tileRes, "%d", tileLoc);
-  char messageToSend[MAXDATASIZE];
   strcpy(&messageToSend[0], chosenOption);
   strcpy(&messageToSend[1], tileRes);
-  char *msg = messageToSend;
+
   printf("%s\n", msg);
   res = SendData(serverSocket, msg, MAXDATASIZE);
 }

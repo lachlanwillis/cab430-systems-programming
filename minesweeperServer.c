@@ -34,38 +34,39 @@ struct GameState {
 char gameString[MAXGAMESIZE];
 
 
-void MinesweeeperMenu(int socket_id){
+void MinesweeperMenu(int socket_id){
   struct GameState gamestate;
 	printf("Placing Mines\n");
   gamestate = PlaceMines();
   gamestate.minesLeft = NUM_MINES;
 	printf("Mines placed\n");
 	int playing = 1;
+	int shortRetval = -1;
+	char chosenOption[8];
 
 	while(playing){
-		int shortRetval = -1;
-		char ret[MAXDATASIZE];
-
 		printf("Sending gamestate\n");
 		FormatGameState(gamestate, gameString);
+
+		// Print gamestate
 		for(int i = 0; i < MAXGAMESIZE+1; i++){
 			printf("%c,", gameString[i]);
 		}
-
 		printf("\n");
+
+		// Send gamestate
 		shortRetval = SendData(socket_id, gameString, MAXGAMESIZE+1);
 
-    playing = 0;
-    char chosenOption[8];
+		// Wait for chosen option from client
     shortRetval = ReceiveData(socket_id, chosenOption, 8);
-    printf("Received Data\n");
-    for(int i = 0; i < 8; i++){
-      printf("%s", &chosenOption[i]);
-    }
+		char choice[strlen(chosenOption)];
+		strcpy(choice, chosenOption);
+
+    printf("Received Data: %s", choice);
     printf("\n");
 
 		// Convert String provided to int
-		int coords = strtol(&chosenOption[1], NULL, 10);
+		strtol(&chosenOption[1], NULL, 10);
     if (strncmp(&chosenOption[0], "r", 1) == 0){
       // Flip Tile
       printf("User chose to Flip Tile\n");
@@ -76,7 +77,7 @@ void MinesweeeperMenu(int socket_id){
       // User chose to quit
       playing = 0;
       printf("User chose to quit\n");
-			return;
+			break;
     } else{
       printf("Error with string\n");
     }
@@ -177,7 +178,7 @@ void FormatGameState(struct GameState gamestate, char* gameString){
 }
 
 void SortLeaderboard(struct LeaderboardEntry *leaderboard) {
-	int x, y;
+	int x = 0, y;
 	struct LeaderboardEntry temp;
 
 	for (y = 0; y <= x; y++) {

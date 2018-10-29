@@ -234,13 +234,14 @@ void* ClientConnectionsHandler(void *args) {
 	printf("Awaiting instruction from user\n");
 	int clientFinished = 0;
 	while(clientFinished != 1){
-		int msg = ReceiveData(socket_id, message, MAXDATASIZE);
+		ReceiveData(socket_id, message, MAXDATASIZE);
 
 		if (strcmp("1", message) == 0){
 	    // Start Minesweeper
 			start_time = time(NULL);
-			MinesweeeperMenu(socket_id);
+			MinesweeperMenu(socket_id);
 			// TODO: THIS WILL CHANGE WHEN WE FINISH CODING END GAME
+			printf("ended, waiting for next command");
 			end_time = time(NULL);
 			int seconds_taken = difftime(start_time, end_time);
 	  } else if (strcmp("2", message) == 0){
