@@ -182,16 +182,12 @@ void FormatGameState(struct GameState gamestate, char* gameString){
 
 	for(int x = 0; x < NUM_TILES_X; x++){
 		for (int y = 0; y < NUM_TILES_Y; y++){
-			printf("%d/%d: ", x, y);
 			int loc;
 			loc = x * NUM_TILES_X + y;
-			printf("%d, ", loc);
 			//printf("This tile has %d nearby mines and revealed = %d\n", gamestate.tiles[x][y].adjacent_mines, gamestate.tiles[x][y].revealed);
       if(gamestate.tiles[x][y].revealed == true){
 				printf("Tile %d/%d is revealed\n", x, y);
-        gameString[loc] = 'X';
-				printf("Nearby Mines = %s\n", &gameString[loc]);
-
+				sprintf(&gameString[loc], "%d", gamestate.tiles[x][y].adjacent_mines);
 			}else{
         gameString[loc] = ' ';
 
@@ -286,7 +282,6 @@ void FlipTile(struct GameState *gameState, int loc_x, int loc_y){
 		(*gameState).tiles[x_tile][y_tile].revealed = true;
 		printf("Flipped Tile %d/%d\n", x_tile,y_tile);
 	}
-
 
 	// If tile is a 0, flip the tiles around it. Repeat (Most likely call FlipTile for the tiles around)
 
