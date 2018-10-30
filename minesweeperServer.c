@@ -35,8 +35,12 @@ struct GameState {
 }GameState;
 
 char gameString[MAXGAMESIZE];
+time_t start_time, end_time;
 
 void MinesweeperMenu(int socket_id){
+	// Start timer
+	start_time = time(NULL);
+
 	// Seed the random number
 	srand(RANDOM_NUM_SEED);
 
@@ -63,24 +67,25 @@ void MinesweeperMenu(int socket_id){
 		printf("\n");
 
 		// Wait for client to request gameState
-		while(res){
-			shortRetval = ReceiveData(socket_id, clientReq, 1);
-			if (shortRetval < 0){
-			} else if (strncmp(clientReq, "1", 1) == 0){
-				res = 0;
-			}
-		}
+		// shortRetval = ReceiveData(socket_id, clientReq, MAXDATASIZE);
+
+		// printf("Recieved: %s\n", clientReq);
+
+		// if (shortRetval <= 0){
+		// 	// TODO: handle this
+		// 	printf("A BIG ERROR");
+		// 	return;
+		// }
+	
 
 		// Send gamestate
 		printf("Sending gamestate\n");
-		shortRetval = SendData(socket_id, gameString, MAXGAMESIZE+1);
+		shortRetval = SendData(socket_id, gameString, sizeof gameString);
 
 		// Wait for chosen option from client
     shortRetval = ReceiveData(socket_id, chosenOption, 8);
-		char choice[strlen(chosenOption)];
-		strcpy(choice, chosenOption);
 
-    printf("Received Data: %s", choice);
+    printf("Received Data: %s", chosenOption);
     printf("\n");
 		printf("%c,%c\n", chosenOption[1], chosenOption[2]);
 
@@ -102,18 +107,22 @@ void MinesweeperMenu(int socket_id){
 	}
 }
 
-// create functions here that are defined in the header
+// Generic Receive Data function
 int ReceiveData(int serverSocket, char* message, short messageSize) {
   int shortRetval = -1;
 
-  if ((shortRetval = recv(serverSocket, message, messageSize, 0)) == -1) {
+  printf("Listening\n");
+
+
+  if ((shortRetval = recv(serverSocket, message, messageSize, 0)) <= 0 ) {
     perror("recv");
     exit(1);
   }
-  message[shortRetval]='\0';
+  // message[1]='\0';
   return shortRetval;
 }
 
+// Generic Send Data function
 int SendData(int serverSocket, char* message, short messageSize) {
   int shortRetval = -1;
 
@@ -124,7 +133,7 @@ int SendData(int serverSocket, char* message, short messageSize) {
   return shortRetval;
 }
 
-
+// Returns whether the location given is a mine
 int TileContainsMine(int x, int y, struct GameState gamestate) {
 	if(gamestate.tiles[x][y].is_mine){
     return 1;
@@ -167,15 +176,14 @@ struct GameState PlaceMines(){
   return gamestate;
 }
 
-
 // Prepare the gamestate into an easy to communicate gameString
 void FormatGameState(struct GameState gamestate, char* gameString){
 	// initialise the string to be empty
 	for(int initial = 0; initial < MAXGAMESIZE; initial++){
 		gameString[initial] = ' ';
 	}
-	// Loop through each element and set it to the appropriate value
 
+	// Loop through each element and set it to the appropriate value
 	for(int x = 0; x < NUM_TILES_X; x++){
 		for (int y = 0; y < NUM_TILES_Y; y++){
 			int loc;
@@ -188,12 +196,11 @@ void FormatGameState(struct GameState gamestate, char* gameString){
 				}
 			} else{
         gameString[loc] = ' ';
-
 			}
 		}
 	}
 
-	if(gamestate.minesLeft == 10){
+	if (gamestate.minesLeft == 10) {
 		gameString[82] = '1';
 		gameString[83] = '0';
 	}else {
@@ -202,6 +209,7 @@ void FormatGameState(struct GameState gamestate, char* gameString){
 	}
 }
 
+// Function sorts the leaderboard in descending order by seconds, total won, username (alpha)
 void SortLeaderboard(struct LeaderboardEntry *leaderboard) {
 	int x = 0, y;
 	struct LeaderboardEntry temp;
@@ -246,7 +254,7 @@ void SortLeaderboard(struct LeaderboardEntry *leaderboard) {
 	}
 }
 
-
+// Function formats the leaderboard and sends it to the client
 void SendLeaderboard(int socket, struct LeaderboardEntry *leaderboard) {
 	int time_count, won, played;
 
@@ -265,7 +273,7 @@ void SendLeaderboard(int socket, struct LeaderboardEntry *leaderboard) {
 	}
 }
 
-
+// Flip the tile requested by the client
 void FlipTile(struct GameState *gameState, int loc_x, int loc_y){
 	int x_tile, y_tile;
 	x_tile = loc_x;
@@ -305,14 +313,19 @@ void FlipTile(struct GameState *gameState, int loc_x, int loc_y){
 		}
 	}
 	// If tile is a 0, flip the tiles around it. Repeat (Most likely call FlipTile for the tiles around)
-
 }
 
-
-
+// Flag a tile, if a mine = success, if not = inform client / display message
 void FlagTile(struct GameState *gameState, int loc_x, int loc_y){
+	// FLAG THE TILE
 
-
+	// Successfully placed a flag - Check for win state
+	if ((*gameState).minesLeft == 0) {
+		// WE WIN! Stop timer, send message and time
+		end_time = time(NULL);
+		int seconds_taken = difftime(start_time, end_time);
+		// send win notification and time to client
+	}
 }
 
 void GameOverMsg(int time, int won){

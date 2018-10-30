@@ -15,7 +15,6 @@
 
 #include <signal.h>
 
-#include <time.h>
 #include <unistd.h>
 
 #include "minesweeperServer.h"
@@ -45,10 +44,6 @@ socklen_t sin_size;
 // Setup pthread variables
 pthread_t client_thread;
 pthread_attr_t attr;
-
-// Setup leaderboard timing vars
-time_t start_time;
-time_t end_time;
 
 int main(int argc, char* argv[]) {
 	// Setup Handle Exit Signal
@@ -149,7 +144,7 @@ int main(int argc, char* argv[]) {
 		// TODO: Threading does not work with multiple concurrent users.
 		pthread_attr_t attr;
 		pthread_attr_init(&attr);
-		pthread_create(&client_thread, &attr, ClientConnectionsHandler, (void *) clientConnect);
+		pthread_create(&client_thread, &attr, ClientConnectionsHandler, (void *) &clientConnect);
 
 		pthread_join(client_thread, NULL);
 	}
@@ -178,7 +173,7 @@ void HandleExitSignal() {
 void* ClientConnectionsHandler(void *args) {
 	char message[MAXDATASIZE], loginMessage[MAXDATASIZE];
 	int read_size;
-	int socket_id = (uintptr_t)args;
+	int socket_id = *((int *)args);
 	char authFile[50] = "Authentication.txt";
 	char loginDetails[13][2][256];
 
@@ -198,23 +193,20 @@ void* ClientConnectionsHandler(void *args) {
 		strcpy(loginMessage, "0");
 
 		read_size = ReceiveData(socket_id, message, MAXDATASIZE);
-		char username[strlen(message)];
-
-		strcpy(username, message);
-		fprintf(stderr, "Received username: %s\n", username);
+	
+		fprintf(stderr, "Received username: %s\n", message);
 		for(int i = 1; i < 12; i++){
-			if(strcmp(username, loginDetails[i][0]) == 0){
+			if(strcmp(message, loginDetails[i][0]) == 0){
 				user = i;
 			}
 		}
 
 		// Receive password
 		read_size = ReceiveData(socket_id, message, MAXDATASIZE);
-		char password[strlen(message)];
-		strcpy(password, message);
-		fprintf(stderr, "Received password: %s\n", password);
+
+		fprintf(stderr, "Received password: %s\n", message);
 		int resMes = -1;
-		if((user > 0) && (strcmp(password, loginDetails[user][1]) == 0)){
+		if((user > 0) && (strcmp(message, loginDetails[user][1]) == 0)){
 			// Continue
 			printf("Correct Username and Password\n");
 			strcpy(message, "1");
@@ -238,12 +230,8 @@ void* ClientConnectionsHandler(void *args) {
 
 		if (strcmp("1", message) == 0){
 	    // Start Minesweeper
-			start_time = time(NULL);
 			MinesweeperMenu(socket_id);
-			// TODO: THIS WILL CHANGE WHEN WE FINISH CODING END GAME
 			printf("Ended, waiting for next command\n");
-			end_time = time(NULL);
-			int seconds_taken = difftime(start_time, end_time);
 	  } else if (strcmp("2", message) == 0){
 	    // Show Leaderboard
 			printf("Sending leaderboard\n");
