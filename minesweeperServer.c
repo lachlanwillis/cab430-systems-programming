@@ -39,22 +39,28 @@ char gameString[MAXGAMESIZE];
 void MinesweeperMenu(int socket_id){
 	// Seed the random number
 	srand(RANDOM_NUM_SEED);
+
 	// Create GameState
   struct GameState gamestate;
+	int shortRetval = -1, res, playing = 1;
+	char gameString[MAXGAMESIZE], clientReq[MAXDATASIZE], chosenOption[8];
+
+	// Place mines
 	printf("Placing Mines\n");
   gamestate = PlaceMines();
   gamestate.minesLeft = NUM_MINES;
 	printf("Mines placed\n");
-	int playing = 1;
-	int shortRetval = -1;
-	char chosenOption[8];
 
-	while(playing){
-		int shortRetval = -1;
-		char gameString[MAXGAMESIZE];
-		char clientReq[MAXDATASIZE];
+	while (playing) {
+		res = 1;
 
-		int res = 1;
+		// Format and print gamestate
+		FormatGameState(gamestate, gameString);
+
+		for(int i = 0; i < MAXGAMESIZE+1; i++){
+			printf("%c,", gameString[i]);
+		}
+		printf("\n");
 
 		// Wait for client to request gameState
 		while(res){
@@ -65,16 +71,8 @@ void MinesweeperMenu(int socket_id){
 			}
 		}
 
-		printf("Sending gamestate\n");
-		FormatGameState(gamestate, gameString);
-
-		// Print gamestate
-		for(int i = 0; i < MAXGAMESIZE+1; i++){
-			printf("%c,", gameString[i]);
-		}
-		printf("\n");
-
 		// Send gamestate
+		printf("Sending gamestate\n");
 		shortRetval = SendData(socket_id, gameString, MAXGAMESIZE+1);
 
 		// Wait for chosen option from client
@@ -85,17 +83,15 @@ void MinesweeperMenu(int socket_id){
     printf("Received Data: %s", choice);
     printf("\n");
 		printf("%c,%c\n", chosenOption[1], chosenOption[2]);
-		// Convert String provided to int
-		//strtol(&chosenOption[1], NULL, 10);
-    if (strncmp(&chosenOption[0], "r", 1) == 0){
+
+    if (chosenOption[0] == 'r'){
       // Flip Tile
       printf("User chose to Flip Tile\n");
 			FlipTile(&gamestate, chosenOption[1] - 49, chosenOption[2] - 49);
-			playing = 1;
-    } else if (strncmp(&chosenOption[0], "p", 1) == 0){
+    } else if (chosenOption[0] == 'p'){
       // Place Flag
       printf("User chose to Place Flag\n");
-    } else if (strncmp(&chosenOption[0], "q", 1) == 0){
+    } else if (chosenOption[0] == 'q'){
       // User chose to quit
       playing = 0;
       printf("User chose to quit\n");

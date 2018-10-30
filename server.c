@@ -241,7 +241,7 @@ void* ClientConnectionsHandler(void *args) {
 			start_time = time(NULL);
 			MinesweeperMenu(socket_id);
 			// TODO: THIS WILL CHANGE WHEN WE FINISH CODING END GAME
-			printf("ended, waiting for next command");
+			printf("Ended, waiting for next command\n");
 			end_time = time(NULL);
 			int seconds_taken = difftime(start_time, end_time);
 	  } else if (strcmp("2", message) == 0){
