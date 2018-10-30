@@ -90,7 +90,7 @@ void MinesweeperMenu(int socket_id){
     if (strncmp(&chosenOption[0], "r", 1) == 0){
       // Flip Tile
       printf("User chose to Flip Tile\n");
-			FlipTile(&gamestate, chosenOption[1], chosenOption[2]);
+			FlipTile(&gamestate, chosenOption[1] - 49, chosenOption[2] - 49);
 			playing = 1;
     } else if (strncmp(&chosenOption[0], "p", 1) == 0){
       // Place Flag
@@ -160,8 +160,8 @@ struct GameState PlaceMines(){
 			for (int b = -1; b < 2; b++){
 				if((a + x > -1) && (a + x < NUM_TILES_X)){
 					if((b + y > -1) && (b + y < NUM_TILES_Y)){
-						if(a!=x && b!=y){
-							gamestate.tiles[x][y].adjacent_mines++;
+						if(gamestate.tiles[x+a][y+b].is_mine == false){
+							gamestate.tiles[x+a][y+b].adjacent_mines++;
 						}
 					}
 				}
@@ -184,11 +184,13 @@ void FormatGameState(struct GameState gamestate, char* gameString){
 		for (int y = 0; y < NUM_TILES_Y; y++){
 			int loc;
 			loc = x * NUM_TILES_X + y;
-			//printf("This tile has %d nearby mines and revealed = %d\n", gamestate.tiles[x][y].adjacent_mines, gamestate.tiles[x][y].revealed);
       if(gamestate.tiles[x][y].revealed == true){
-				printf("Tile %d/%d is revealed\n", x, y);
-				sprintf(&gameString[loc], "%d", gamestate.tiles[x][y].adjacent_mines);
-			}else{
+				if (gamestate.tiles[x][y].is_mine == true){
+					gameString[loc] = '*';
+				} else {
+					sprintf(&gameString[loc], "%d", gamestate.tiles[x][y].adjacent_mines);
+				}
+			} else{
         gameString[loc] = ' ';
 
 			}
@@ -270,26 +272,49 @@ void SendLeaderboard(int socket, struct LeaderboardEntry *leaderboard) {
 
 void FlipTile(struct GameState *gameState, int loc_x, int loc_y){
 	int x_tile, y_tile;
-	x_tile = loc_x - 49;
-	y_tile = loc_y - 49;
+	x_tile = loc_x;
+	y_tile = loc_y;
 	// Check to see if tile is a mine
 	if( (*gameState).tiles[x_tile][y_tile].is_mine == true){
 		// Game Over
 		printf("Game Over: Mine at %d/%d\n", x_tile, y_tile);
 		(*gameState).GameOver = true;
+		for(int x = 0; x < NUM_TILES_X; x++){
+			for (int y = 0; y < NUM_TILES_Y; y++){
+				if ((*gameState).tiles[x][y].is_mine == true){
+					(*gameState).tiles[x][y].revealed = true;
+				} else {
+					(*gameState).tiles[x][y].revealed = false;
+				}
+			}
+		}
 	} else {
 		// If tile is not a mine - flip the tile, to reveal number below
 		(*gameState).tiles[x_tile][y_tile].revealed = true;
-		printf("Flipped Tile %d/%d\n", x_tile,y_tile);
+		printf("Flipped Tile %d/%d\n", x_tile, y_tile);
 	}
-
+	if ((*gameState).tiles[x_tile][y_tile].adjacent_mines == 0){
+		for(int a = -1; a < 2; a++){
+			for (int b = -1; b < 2; b++){
+				if((a + x_tile > -1) && (a + x_tile < NUM_TILES_X)){
+					if((b + y_tile > -1) && (b + y_tile < NUM_TILES_Y)){
+						if((*gameState).tiles[x_tile+a][y_tile+b].adjacent_mines == 0){
+							if ((*gameState).tiles[x_tile+a][y_tile+b].revealed == false){
+								FlipTile(gameState, x_tile+a, y_tile+b);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 	// If tile is a 0, flip the tiles around it. Repeat (Most likely call FlipTile for the tiles around)
 
 }
 
 
 
-void FlagTile(struct GameState *gameState, int loc){
+void FlagTile(struct GameState *gameState, int loc_x, int loc_y){
 
 
 }
