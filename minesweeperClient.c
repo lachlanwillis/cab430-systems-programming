@@ -42,9 +42,8 @@ void StartMinesweeper(int serverSocket) {
 
   // Get username
   fprintf(stderr, "You are required to log on with your registered name and password:\n\n");
+
   while(strcmp(loginMessage, "1")!=0){
-
-
     fprintf(stderr, "Username: "); //Add read input
     scanf("%s", username);
 
@@ -59,11 +58,15 @@ void StartMinesweeper(int serverSocket) {
     // wait for server response
     loginStatus = ReceiveData(serverSocket, message, MAXDATASIZE);
     strcpy(loginMessage, message);
+
     if(strcmp(loginMessage, "1")==0){
       // Logged in Successfully
       printf("%s\n", "Successfully Logged in");
     } else{
       fprintf(stderr, "Incorrect Username or Password. Please try again...\n");
+      
+      memset(username,0,sizeof(username));
+      memset(password,0,sizeof(password));
     }
   }
   // At this point the user is logged in and can proceed to menu
@@ -136,8 +139,6 @@ int ReceiveData(int serverSocket, char* message, short messageSize) {
 int SendData(int serverSocket, char* message, short messageSize) {
   int shortRetval = -1;
 
-  printf("Sending: %s\n", message);
-
   message[messageSize] = '\0';
 
   if ((shortRetval = send(serverSocket, message, messageSize, 0)) == -1) {
@@ -206,48 +207,69 @@ void ShowLeaderboard(int serverSocket){
 
 // Start Playing the game Minesweeper
 void PlayMinesweeper(int serverSocket){
-  int playingGame = 1, enteringOption = 1, shortRetval = -1;
+  int playingGame = 1, enteringOption = 1, shortRetval = -1, coords;
   char selectionOption[256];
+  char flagMessage[MAXDATASIZE];
+  char coordsChar[3];
+  bool flagOption = false;
 
   do {
 		enteringOption = 1;
-
-		// Send message to sever requesting gameState
-		printf("Requesting Data from server\n");
-
-		if (shortRetval < 0){
-			printf("Error communicating with server\n");
-		}
-
-    printf("GOT THROUH");
 
     // Get Data from Server here.
 		ReceiveGameState(serverSocket, gameString);
 		printf("Drawing Game: %s\n", gameString);
 
+    system("clear");
+
     // Draw Tiles
     DrawGame(gameString);
 
+    if (flagOption) {
+      if (flagMessage[0] == '1') {
+        // Success, mine at flag loc
+        printf("\nSuccess! Mine at location: %c, %c", coordsChar[0], coordsChar[1]);
+      } else {
+        // Error, no mine at flag loc
+        printf("\nUnsuccessful! Mine NOT at location: %c, %c", coordsChar[0], coordsChar[1]);
+      }
+      flagOption = false;
+    }
+
     while(enteringOption){
+      printf("\n\nChoose an option:\n");
+      printf("<R> Reveal tile\n");
+      printf("<P> Place flag\n");
+      printf("<Q> Quit game\n\n");
+      printf("Option (R, P, Q):");
+      
       scanf("%s", selectionOption);
 
       if (strcmp("r", selectionOption) == 0){
         // User chose to reveal a tile
-				int coords = GetTileCoordinates();
-        // printf("%d\n", coords);
+				coords = GetTileCoordinates();
+        sprintf(coordsChar, "%d", coords);
+
         SendGameChoice(serverSocket, "r", coords);
-				printf("Sent data to server\n");
+
 				enteringOption = 0;
       } else if (strcmp("p", selectionOption) == 0){
         // User chose to place a flag
-        int coords = GetTileCoordinates();
+        coords = GetTileCoordinates();
+        sprintf(coordsChar, "%d", coords);
+
         SendGameChoice(serverSocket, "p", coords);
+        ReceiveData(serverSocket, flagMessage, MAXDATASIZE);
+
+        flagOption = true;
 				enteringOption = 0;
       } else if (strcmp("q", selectionOption) == 0){
         // User chose to quit
         playingGame = 0;
+
         SendGameChoice(serverSocket, "q", 0);
         system("clear");
+
         printf("User quit game successfully.");
         return;
       } else {
@@ -290,8 +312,6 @@ void DrawGame(char* gameState){
   int x, y, asciCon;
   char row;
 
-  system("clear");
-
 	if (gameState[82] == '0'){
 		minesLeft = &gameState[MAXDATASIZE];
 	} else {
@@ -313,12 +333,6 @@ void DrawGame(char* gameState){
     }
     printf("\n");
   }
-
-  printf("\n\nChoose an option:\n");
-  printf("<R> Reveal tile\n");
-  printf("<P> Place flag\n");
-  printf("<Q> Quit game\n\n");
-  printf("Option (R, P, Q):");
 }
 
 // Receives string with gamestate from server

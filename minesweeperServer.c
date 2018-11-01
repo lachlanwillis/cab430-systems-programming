@@ -66,18 +66,6 @@ void MinesweeperMenu(int socket_id){
 		}
 		printf("\n");
 
-		// Wait for client to request gameState
-		// shortRetval = ReceiveData(socket_id, clientReq, MAXDATASIZE);
-
-		// printf("Recieved: %s\n", clientReq);
-
-		// if (shortRetval <= 0){
-		// 	// TODO: handle this
-		// 	printf("A BIG ERROR");
-		// 	return;
-		// }
-	
-
 		// Send gamestate
 		printf("Sending gamestate\n");
 		shortRetval = SendData(socket_id, gameString, sizeof gameString);
@@ -96,6 +84,7 @@ void MinesweeperMenu(int socket_id){
     } else if (chosenOption[0] == 'p'){
       // Place Flag
       printf("User chose to Place Flag\n");
+			FlagTile(&gamestate, chosenOption[1] - 49, chosenOption[2] - 49, socket_id);
     } else if (chosenOption[0] == 'q'){
       // User chose to quit
       playing = 0;
@@ -110,9 +99,6 @@ void MinesweeperMenu(int socket_id){
 // Generic Receive Data function
 int ReceiveData(int serverSocket, char* message, short messageSize) {
   int shortRetval = -1;
-
-  printf("Listening\n");
-
 
   if ((shortRetval = recv(serverSocket, message, messageSize, 0)) <= 0 ) {
     perror("recv");
@@ -203,9 +189,9 @@ void FormatGameState(struct GameState gamestate, char* gameString){
 	if (gamestate.minesLeft == 10) {
 		gameString[82] = '1';
 		gameString[83] = '0';
-	}else {
+	} else {
 		gameString[82] = ' ';
-		gameString[83] = gamestate.minesLeft;
+		gameString[83] = gamestate.minesLeft+'0';
 	}
 }
 
@@ -316,16 +302,42 @@ void FlipTile(struct GameState *gameState, int loc_x, int loc_y){
 }
 
 // Flag a tile, if a mine = success, if not = inform client / display message
-void FlagTile(struct GameState *gameState, int loc_x, int loc_y){
-	// FLAG THE TILE
+void FlagTile(struct GameState *gameState, int loc_x, int loc_y, int socket_id){
+	char flagMessage[2];
 
-	// Successfully placed a flag - Check for win state
-	if ((*gameState).minesLeft == 0) {
-		// WE WIN! Stop timer, send message and time
-		end_time = time(NULL);
-		int seconds_taken = difftime(start_time, end_time);
-		// send win notification and time to client
+	// Check to see if tile is mine
+	if ((*gameState).tiles[loc_x][loc_y].is_mine == true) {
+		// Flag placed successfully
+		printf("Flag Placed! Mine at %d/%d\n", loc_x, loc_y);
+
+		flagMessage[0] = '1';
+
+		(*gameState).tiles[loc_x][loc_y].revealed = true;
+		(*gameState).minesLeft = (*gameState).minesLeft - 1;
+
+		printf("Mines left: %d\n", (*gameState).minesLeft);
+
+		// Successfully placed a flag - Check for win state
+		if ((*gameState).minesLeft == 0) {
+			// WE WIN! Stop timer, send message and time
+			end_time = time(NULL);
+			int seconds_taken = difftime(start_time, end_time);
+			// send win notification and time to client
+			flagMessage[1] = '1';
+		} else {
+			// More mines are remaining
+			flagMessage[1] = '0';
+		}
+	} else {
+		// No mine at loc, flag not placed
+		// send message to user and break;
+		printf("No mine at: %d, %d\n", loc_x, loc_y);
+
+		flagMessage[0] = '0';
 	}
+
+	// Send status to user
+	SendData(socket_id, flagMessage, sizeof flagMessage);
 }
 
 void GameOverMsg(int time, int won){

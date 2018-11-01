@@ -192,6 +192,8 @@ void* ClientConnectionsHandler(void *args) {
 		int user = -1;
 		strcpy(loginMessage, "0");
 
+		memset(message,0,sizeof(message));
+		
 		read_size = ReceiveData(socket_id, message, MAXDATASIZE);
 	
 		fprintf(stderr, "Received username: %s\n", message);
@@ -200,6 +202,8 @@ void* ClientConnectionsHandler(void *args) {
 				user = i;
 			}
 		}
+
+		memset(message,0,sizeof(message));
 
 		// Receive password
 		read_size = ReceiveData(socket_id, message, MAXDATASIZE);
@@ -214,7 +218,7 @@ void* ClientConnectionsHandler(void *args) {
 
 		}else{
 			printf("Wrong Username or Password\n");
-			strcpy(message, "0");
+			strcpy(message, "");
 			strcpy(loginMessage, "0");
 		}
 		resMes = SendData(socket_id, message, MAXDATASIZE);

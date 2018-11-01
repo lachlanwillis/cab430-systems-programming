@@ -19,6 +19,7 @@ void MinesweeperMenu(int);
 void FormatGameState(struct GameState, char*);
 void SendLeaderboard(int, struct LeaderboardEntry*);
 void FlipTile(struct GameState*, int, int);
+void FlagTile(struct GameState*, int, int, int);
 void GameOverMsg(int, int);
 void SortLeaderboard(struct LeaderboardEntry*);
 
