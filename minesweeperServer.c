@@ -283,22 +283,28 @@ void FlipTile(struct GameState *gameState, int loc_x, int loc_y){
 		(*gameState).tiles[x_tile][y_tile].revealed = true;
 		printf("Flipped Tile %d/%d\n", x_tile, y_tile);
 	}
-	if ((*gameState).tiles[x_tile][y_tile].adjacent_mines == 0){
-		for(int a = -1; a < 2; a++){
-			for (int b = -1; b < 2; b++){
-				if((a + x_tile > -1) && (a + x_tile < NUM_TILES_X)){
-					if((b + y_tile > -1) && (b + y_tile < NUM_TILES_Y)){
-						if((*gameState).tiles[x_tile+a][y_tile+b].adjacent_mines == 0){
-							if ((*gameState).tiles[x_tile+a][y_tile+b].revealed == false){
-								FlipTile(gameState, x_tile+a, y_tile+b);
-							}
+	
+	// If tile has 0 adjacent mines, flip surrounding 8 neighbours
+	if ((*gameState).tiles[x_tile][y_tile].adjacent_mines == 0) {
+		FlipSurrounds(gameState, loc_x, loc_y);
+	}
+}
+
+void FlipSurrounds(struct GameState *gameState, int loc_x, int loc_y) {
+	for(int a = -1; a < 2; a++){
+		for (int b = -1; b < 2; b++){
+			if((a + loc_x > -1) && (a + loc_x < NUM_TILES_X)){
+				if((b + loc_y > -1) && (b + loc_y < NUM_TILES_Y)){
+					if ((*gameState).tiles[loc_x+a][loc_y+b].revealed == false) {
+						(*gameState).tiles[loc_x+a][loc_y+b].revealed = true;
+						if ((*gameState).tiles[loc_x+a][loc_y+b].adjacent_mines == 0) {
+							FlipSurrounds(gameState, loc_x+a, loc_y+b);
 						}
 					}
 				}
 			}
 		}
 	}
-	// If tile is a 0, flip the tiles around it. Repeat (Most likely call FlipTile for the tiles around)
 }
 
 // Flag a tile, if a mine = success, if not = inform client / display message
