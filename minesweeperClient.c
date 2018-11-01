@@ -270,7 +270,7 @@ void PlayMinesweeper(int serverSocket){
         SendGameChoice(serverSocket, "q", 0);
         system("clear");
 
-        printf("User quit game successfully.");
+        fprintf(stderr, "User quit game successfully.\n\n");
         return;
       } else {
         printf("Did not enter Options R, P or Q.\n Please try again\n");
