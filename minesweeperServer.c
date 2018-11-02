@@ -13,8 +13,8 @@
 #define NUM_MINES 10
 
 #define MAXGAMESIZE 83
-#define TOTAL_CONNECTIONS 10
 #define MAXDATASIZE 256
+#define TOTAL_CONNECTIONS 10
 
 // Define what a tile is
 typedef struct Tile{
@@ -25,8 +25,6 @@ typedef struct Tile{
 }Tile;
 
 struct GameState {
-	// More here
-
 	bool GameOver;
   int minesLeft;
 	Tile tiles[NUM_TILES_X] [NUM_TILES_Y];
@@ -35,13 +33,16 @@ struct GameState {
 char gameString[MAXGAMESIZE];
 time_t start_time, end_time;
 
+// Setup leaderboard array
+struct LeaderboardEntry leaderboard[TOTAL_CONNECTIONS];
+
 void MinesweeperMenu(int socket_id){
 	// Start timer
 	start_time = time(NULL);
 
 	// Create GameState
   struct GameState gamestate;
-	int shortRetval = -1, res, playing = 1;
+	int shortRetval = -1, res;
 	char gameString[MAXGAMESIZE], clientReq[MAXDATASIZE], chosenOption[8];
 
 	// Place mines
@@ -50,7 +51,7 @@ void MinesweeperMenu(int socket_id){
   gamestate.minesLeft = NUM_MINES;
 	printf("Mines placed\n");
 
-	while (playing) {
+	while (!gamestate.GameOver) {
 		res = 1;
 
 		// Format and print gamestate
@@ -75,20 +76,26 @@ void MinesweeperMenu(int socket_id){
     if (chosenOption[0] == 'r'){
       // Flip Tile
       printf("User chose to Flip Tile\n");
-			FlipTile(&gamestate, chosenOption[1] - 49, chosenOption[2] - 49);
+			FlipTile(&gamestate, chosenOption[1] - 49, chosenOption[2] - 49, socket_id);
     } else if (chosenOption[0] == 'p'){
       // Place Flag
       printf("User chose to Place Flag\n");
 			FlagTile(&gamestate, chosenOption[1] - 49, chosenOption[2] - 49, socket_id);
     } else if (chosenOption[0] == 'q'){
       // User chose to quit
-      playing = 0;
       printf("User chose to quit\n");
+			gamestate.GameOver = true;
 			break;
     } else {
       printf("Error with string\n");
     }
 	}
+
+	// Game over, send final game status
+	FormatGameState(gamestate, gameString);
+	// Send gamestate
+	printf("Sending gamestate\n");
+	shortRetval = SendData(socket_id, gameString, sizeof gameString);
 }
 
 // Generic Receive Data function
@@ -195,6 +202,42 @@ void FormatGameState(struct GameState gamestate, char* gameString){
 	}
 }
 
+void AddLeaderboardEntry(char username[MAXDATASIZE], int totalTime, bool won) {
+	bool exists = false;
+	int freeLoc = -1;
+
+	// If leaderboard user exists, update data
+	for (int i = 0; i < TOTAL_CONNECTIONS; i ++) {
+		if (strcmp(leaderboard[i].username, username) == 0) {
+			exists = true;
+			if (leaderboard[i].time > totalTime) {
+				leaderboard[i].time = totalTime;
+			}
+			if (won) {
+				leaderboard[i].won++;
+			}
+			leaderboard[i].played++;
+		}
+	}
+
+	// No entry exists for user, create one
+	if (!exists) {
+		for (int i = 0; i < TOTAL_CONNECTIONS; i ++) {
+			if (leaderboard[i].username[0] == '\0') {
+				freeLoc = i;
+				break;
+			}
+		}
+
+		if (freeLoc > -1) {
+			strcpy(leaderboard[freeLoc].username, username);
+			leaderboard[freeLoc].time = totalTime;
+			leaderboard[freeLoc].won = won;
+			leaderboard[freeLoc].played = 1;
+		}
+	}
+}
+
 // Function sorts the leaderboard in descending order by seconds, total won, username (alpha)
 void SortLeaderboard(struct LeaderboardEntry *leaderboard) {
 	int x = 0, y;
@@ -241,8 +284,9 @@ void SortLeaderboard(struct LeaderboardEntry *leaderboard) {
 }
 
 // Function formats the leaderboard and sends it to the client
-void SendLeaderboard(int socket, struct LeaderboardEntry *leaderboard) {
+void SendLeaderboard(int socket) {
 	int time_count, won, played;
+	char username[MAXDATASIZE];
 
 	SortLeaderboard(leaderboard);
 	fprintf(stderr, "Leaderboard Sorted\n");
@@ -251,8 +295,9 @@ void SendLeaderboard(int socket, struct LeaderboardEntry *leaderboard) {
 		time_count = htonl(leaderboard[i].time);
 		won = htonl(leaderboard[i].won);
 		played = htonl(leaderboard[i].played);
+		strcpy(username, leaderboard[i].username);
 
-		SendData(socket, leaderboard[i].username, MAXDATASIZE);
+		SendData(socket, username, sizeof username);
 		write(socket, &time_count, sizeof(time_count));
 		write(socket, &won, sizeof(won));
 		write(socket, &played, sizeof(played));
@@ -260,15 +305,28 @@ void SendLeaderboard(int socket, struct LeaderboardEntry *leaderboard) {
 }
 
 // Flip the tile requested by the client
-void FlipTile(struct GameState *gameState, int loc_x, int loc_y){
+void FlipTile(struct GameState *gameState, int loc_x, int loc_y, int socket_id) {
 	int x_tile, y_tile;
 	x_tile = loc_x;
 	y_tile = loc_y;
+
+	char flipMessage[1];
+
+
 	// Check to see if tile is a mine
-	if( (*gameState).tiles[x_tile][y_tile].is_mine == true){
+	if ((*gameState).tiles[x_tile][y_tile].is_mine == true) {
 		// Game Over
 		printf("Game Over: Mine at %d/%d\n", x_tile, y_tile);
 		(*gameState).GameOver = true;
+
+		flipMessage[0] = '1';
+		SendData(socket_id, flipMessage, sizeof flipMessage);
+
+		end_time = time(NULL);
+		int seconds_taken = difftime(end_time, start_time);
+
+		GameOverMsg(socket_id, seconds_taken, false);
+
 		for(int x = 0; x < NUM_TILES_X; x++){
 			for (int y = 0; y < NUM_TILES_Y; y++){
 				if ((*gameState).tiles[x][y].is_mine == true){
@@ -282,14 +340,18 @@ void FlipTile(struct GameState *gameState, int loc_x, int loc_y){
 		// If tile is not a mine - flip the tile, to reveal number below
 		(*gameState).tiles[x_tile][y_tile].revealed = true;
 		printf("Flipped Tile %d/%d\n", x_tile, y_tile);
-	}
-	
-	// If tile has 0 adjacent mines, flip surrounding 8 neighbours
-	if ((*gameState).tiles[x_tile][y_tile].adjacent_mines == 0) {
-		FlipSurrounds(gameState, loc_x, loc_y);
+
+		flipMessage[0] = '0';
+		SendData(socket_id, flipMessage, sizeof flipMessage);
+
+		// If tile has 0 adjacent mines, flip surrounding 8 neighbours
+		if ((*gameState).tiles[x_tile][y_tile].adjacent_mines == 0) {
+			FlipSurrounds(gameState, loc_x, loc_y);
+		}
 	}
 }
 
+// Flip surrounding tiles if tile has - adjacent mines
 void FlipSurrounds(struct GameState *gameState, int loc_x, int loc_y) {
 	for(int a = -1; a < 2; a++){
 		for (int b = -1; b < 2; b++){
@@ -308,7 +370,7 @@ void FlipSurrounds(struct GameState *gameState, int loc_x, int loc_y) {
 }
 
 // Flag a tile, if a mine = success, if not = inform client / display message
-void FlagTile(struct GameState *gameState, int loc_x, int loc_y, int socket_id){
+void FlagTile(struct GameState *gameState, int loc_x, int loc_y, int socket_id) {
 	char flagMessage[2];
 
 	// Check to see if tile is mine
@@ -328,15 +390,16 @@ void FlagTile(struct GameState *gameState, int loc_x, int loc_y, int socket_id){
 			// WE WIN! Stop timer, send message and time
 			end_time = time(NULL);
 			int seconds_taken = difftime(start_time, end_time);
-			// send win notification and time to client
+
+			// Send win notification and time to client
 			flagMessage[1] = '1';
+			GameOverMsg(socket_id, seconds_taken, true);
 		} else {
 			// More mines are remaining
 			flagMessage[1] = '0';
 		}
 	} else {
 		// No mine at loc, flag not placed
-		// send message to user and break;
 		printf("No mine at: %d, %d\n", loc_x, loc_y);
 
 		flagMessage[0] = '0';
@@ -346,12 +409,17 @@ void FlagTile(struct GameState *gameState, int loc_x, int loc_y, int socket_id){
 	SendData(socket_id, flagMessage, sizeof flagMessage);
 }
 
-void GameOverMsg(int time, int won){
-	if (won){
-		// Send Congrats
+void GameOverMsg(int socket_id, int time, bool won){
+	char message[MAXDATASIZE];
 
+	// Get username
+	ReceiveData(socket_id, message, MAXDATASIZE);
+
+	if (won) {
+		// Send Congrats
+		AddLeaderboardEntry(message, time, won);
 	} else {
 		// Send Gameover
+		AddLeaderboardEntry(message, time, won);
 	}
-
 }

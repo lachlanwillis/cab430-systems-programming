@@ -11,7 +11,7 @@
 
 #define MAXDATASIZE 256
 #define LEADERBOARD_SIZE 10
-# define MAXGAMESIZE 83
+#define MAXGAMESIZE 83
 
 #define NUM_TILES_X 9
 #define NUM_TILES_Y 9
@@ -176,15 +176,15 @@ void gotoxy(int x, int y) {
 
 // Displays the Leaderboard - Requires Communication to Server
 void ShowLeaderboard(int serverSocket){
-  fprintf(stderr, "===========================================================================\n");
-  fprintf(stderr, "Current Minesweeper Leaderboard\n");
-  fprintf(stderr, "===========================================================================\n");
-  fprintf(stderr, "USERNAME");
+  printf("===========================================================================\n");
+  printf("Current Minesweeper Leaderboard\n");
+  printf("===========================================================================\n");
+  printf("USERNAME");
   gotoxy(20, 4);
-  fprintf(stderr, "BEST TIME");
+  printf("BEST TIME");
   gotoxy(40, 4);
-  fprintf(stderr, "GAMES WON / TOTAL PLAYED\n");
-  fprintf(stderr, "===========================================================================\n");
+  printf("GAMES WON / TOTAL PLAYED\n");
+  printf("===========================================================================\n\n\n");
 
   int shortRetval = -1;
 
@@ -194,22 +194,22 @@ void ShowLeaderboard(int serverSocket){
   // Show the leaderboard
   for (int i = 0; i < LEADERBOARD_SIZE; i++) {
     if (leaderboard[i].username[0] != '\0') {
-      fprintf(stderr, "%s", leaderboard[i].username);
+      printf("%s", leaderboard[i].username);
       gotoxy(20, 6 + i);
-      fprintf(stderr, "%d seconds", leaderboard[i].time);
+      printf("%d seconds", leaderboard[i].time);
       gotoxy(40, 6 + i);
-      fprintf(stderr, "%d games won, ", leaderboard[i].won);
-      fprintf(stderr, "%d games played\n", leaderboard[i].played);
+      printf("%d games won, ", leaderboard[i].won);
+      printf("%d games played\n", leaderboard[i].played);
     }
   }
-  fprintf(stderr, "\n");
+  printf("\n\n===========================================================================\n");
 }
 
 // Start Playing the game Minesweeper
 void PlayMinesweeper(int serverSocket){
-  int playingGame = 1, enteringOption = 1, shortRetval = -1, coords;
+  int playingGame = 1, enteringOption = 1, coords;
   char selectionOption[256];
-  char flagMessage[MAXDATASIZE];
+  char flagMessage[MAXDATASIZE], flipMessage[MAXDATASIZE];
   char coordsChar[3];
   bool flagOption = false;
 
@@ -251,6 +251,20 @@ void PlayMinesweeper(int serverSocket){
         sprintf(coordsChar, "%d", coords);
 
         SendGameChoice(serverSocket, "r", coords);
+        ReceiveData(serverSocket, flipMessage, MAXDATASIZE);
+
+        if (flipMessage[0] == '0') {
+          // No mine hit :)
+        } else {
+          // Hit mine, game over :(
+          SendData(serverSocket, username, sizeof username);
+          ReceiveGameState(serverSocket, gameString);
+          system("clear");
+
+          DrawGame(gameString);
+          fprintf(stderr, "\nMine Hit! Game Over!\n\n");
+          playingGame = 0;
+        }
 
 				enteringOption = 0;
       } else if (strcmp("p", selectionOption) == 0){
@@ -268,6 +282,8 @@ void PlayMinesweeper(int serverSocket){
         playingGame = 0;
 
         SendGameChoice(serverSocket, "q", 0);
+        ReceiveGameState(serverSocket, gameString);
+
         system("clear");
 
         fprintf(stderr, "User quit game successfully.\n\n");
