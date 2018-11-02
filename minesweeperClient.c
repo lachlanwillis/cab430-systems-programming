@@ -222,7 +222,7 @@ void PlayMinesweeper(int serverSocket){
   char selectionOption[256];
   char flagMessage[MAXDATASIZE], flipMessage[MAXDATASIZE];
   char coordsChar[3];
-  bool flagOption = false;
+  bool flagOption = false, flipOption = false;
 
   do {
 		enteringOption = 1;
@@ -240,11 +240,25 @@ void PlayMinesweeper(int serverSocket){
       if (flagMessage[0] == '1') {
         // Success, mine at flag loc
         printf("\nSuccess! Mine at location: %c, %c", coordsChar[0], coordsChar[1]);
+      } else if (flagMessage[0] == '2') {
+        // Tile already flipped
+        fprintf(stderr, "\nTile already flipped, pick another.");
       } else {
         // Error, no mine at flag loc
         printf("\nUnsuccessful! Mine NOT at location: %c, %c", coordsChar[0], coordsChar[1]);
       }
       flagOption = false;
+    }
+
+    if (flipOption) {
+      if (flipMessage[0] == '2') {
+        // Tile already flipped
+        fprintf(stderr, "\nTile already flipped, pick another.");
+      } else {
+        // Error, no mine at flag loc
+        printf("\nTile flipped: %c, %c", coordsChar[0], coordsChar[1]);
+      }
+      flipOption = false;
     }
 
     while(enteringOption){
@@ -275,9 +289,10 @@ void PlayMinesweeper(int serverSocket){
           playingGame = 0;
         } else if (flipMessage[0] == '2') {
           // Tile already flipped
-          fprintf(stderr, "\nTile already flipped, pick another.\n\n");
+          fprintf(stderr, "\nTile already flipped, pick another.\n");
         }
 
+        flipOption = true;
 				enteringOption = 0;
       } else if (strcmp("P", selectionOption) == 0){
         // User chose to place a flag

@@ -387,6 +387,11 @@ void FlipTile(struct GameState *gameState, int loc_x, int loc_y, int socket_id) 
 
 			flipMessage[0] = '0';
 
+			if ((shortRetval = SendData(socket_id, flipMessage, sizeof flipMessage)) <= 0) {
+				close(socket_id);
+				return;
+			}
+
 			// If tile has 0 adjacent mines, flip surrounding 8 neighbours
 			if (gameState->tiles[x_tile][y_tile].adjacent_mines == 0) {
 				FlipSurrounds(gameState, loc_x, loc_y);
