@@ -316,7 +316,7 @@ void PlayMinesweeper(int serverSocket){
           DrawGame(gameString);
 
           // Post message
-          fprintf(stderr, "\nCongradulations! You have located all the mines.\n");
+          fprintf(stderr, "\nCongratulations! You have located all the mines.\n");
           fprintf(stderr, "You won in %d seconds!\n\n", time_total);
           playingGame = 0;
         } else {
