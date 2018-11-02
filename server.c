@@ -52,7 +52,7 @@ void ClientRequestAdd(int socket_id, int num_request, pthread_mutex_t *pthread_m
 int serverListen, clientConnect, portNum;
 struct sockaddr_in serv_addr, client;
 socklen_t sin_size;
-int clientTotalRequests = 0;
+int clientTotalRequests = 0, totalRequests = 0;
 
 struct Request *requests = NULL;
 struct Request *last_request = NULL;
@@ -122,7 +122,7 @@ int main(int argc, char* argv[]) {
 			perror("accept");
 		} else {
 			printf("Server: received connection from %s\n", inet_ntoa(client.sin_addr));
-			ClientRequestAdd(clientConnect, clientTotalRequests, &request_mutex, &request_cond);
+			ClientRequestAdd(clientConnect, totalRequests++, &request_mutex, &request_cond);
 		}
 
 
@@ -140,11 +140,12 @@ int main(int argc, char* argv[]) {
 
 // Gets a request from the Queue
 struct Request *GetRequests(pthread_mutex_t *pthread_mutex){
-	puts("Getting request\n");
 	struct Request *request;
-	pthread_mutex_lock(pthread_mutex);
-
+	// puts("Getting Request\n");
+	// pthread_mutex_lock(pthread_mutex);
+	// puts("Getting request\n");
 	if (clientTotalRequests > 0){
+		puts("Finding request\n");
 		request = requests;
 		requests = requests->next;
 		if (requests == NULL){
@@ -155,12 +156,13 @@ struct Request *GetRequests(pthread_mutex_t *pthread_mutex){
 
 	} else {
 		// No clients in the Queue
+		puts("No client in queue\n");
 		request = NULL;
 	}
 
 	// unlock the Mutex
 	puts("Got Request\n");
-	pthread_mutex_unlock(pthread_mutex);
+	// pthread_mutex_unlock(pthread_mutex);
 	return request;
 
 
@@ -237,12 +239,10 @@ void ClientRequestAdd(int socket_id, int num_request, pthread_mutex_t *pthread_m
 	pthread_mutex_lock(pthread_mutex);
 	puts("checking connection\n");
 	if (clientTotalRequests == 0){
-		puts("A\n");
 		requests = request;
 		last_request = request;
 
 	} else {
-		printf("B: %d\n", clientTotalRequests);
 		last_request->next = request;
 		last_request = request;
 	}
@@ -298,7 +298,8 @@ void ClientConnectionsHandler(struct Request *request, int socket_id) {
 
 		memset(message,0,sizeof(message));
 
-		read_size = ReceiveData(socket_id, message, MAXDATASIZE);
+		printf("Waiting for Username %d\n", socket_id);
+		read_size = ReceiveData(client_thread[socket_id], message, MAXDATASIZE);
 
 		fprintf(stderr, "Received username: %s\n", message);
 		for(int i = 1; i < 12; i++){
