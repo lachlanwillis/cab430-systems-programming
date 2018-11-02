@@ -29,6 +29,7 @@ struct LeaderboardEntry {
 struct LeaderboardEntry leaderboard[LEADERBOARD_SIZE];
 
 char gameString[MAXGAMESIZE];
+int flippedTile[MAXGAMESIZE];
 
 // create functions here that are defined in the header
 void StartMinesweeper(int serverSocket) {
@@ -64,7 +65,7 @@ void StartMinesweeper(int serverSocket) {
       printf("%s\n", "Successfully Logged in");
     } else{
       fprintf(stderr, "Incorrect Username or Password. Please try again...\n");
-      
+
       memset(username,0,sizeof(username));
       memset(password,0,sizeof(password));
     }
@@ -242,7 +243,7 @@ void PlayMinesweeper(int serverSocket){
       printf("<P> Place flag\n");
       printf("<Q> Quit game\n\n");
       printf("Option (R, P, Q):");
-      
+
       scanf("%s", selectionOption);
 
       if (strcmp("r", selectionOption) == 0){
@@ -277,7 +278,7 @@ void PlayMinesweeper(int serverSocket){
         if (flagMessage[1] == '1') {
           // We have won!
           int time_total = 0;
-          
+
           // Send username and receive total seconds taken
           read(serverSocket, &time_total, sizeof(int)*MAXDATASIZE);
           SendData(serverSocket, username, sizeof username);

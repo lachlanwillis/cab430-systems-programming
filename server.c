@@ -195,7 +195,7 @@ void *HandleConnections(void *args){
 
 	// lock the request mutex
 	pthread_mutex_lock(&request_mutex);
-	printf("Thread %d is waiting for a connection\n", thread_id);
+	printf("Thread%d %lu is waiting for a connection\n", thread_id, client_thread[thread_id]);
 	while(1){
 
 		if (clientTotalRequests > 0) {
@@ -298,8 +298,8 @@ void ClientConnectionsHandler(struct Request *request, int socket_id) {
 
 		memset(message,0,sizeof(message));
 
-		printf("Waiting for Username %d\n", socket_id);
-		read_size = ReceiveData(client_thread[socket_id], message, MAXDATASIZE);
+		printf("Waiting for Username %lu\n", client_thread[socket_id]);
+		read_size = ReceiveData(request->sockfd, message, MAXDATASIZE);
 
 		fprintf(stderr, "Received username: %s\n", message);
 		for(int i = 1; i < 12; i++){
@@ -311,7 +311,7 @@ void ClientConnectionsHandler(struct Request *request, int socket_id) {
 		memset(message,0,sizeof(message));
 
 		// Receive password
-		read_size = ReceiveData(socket_id, message, MAXDATASIZE);
+		read_size = ReceiveData(request->sockfd, message, MAXDATASIZE);
 
 		fprintf(stderr, "Received password: %s\n", message);
 		int resMes = -1;
@@ -326,7 +326,7 @@ void ClientConnectionsHandler(struct Request *request, int socket_id) {
 			strcpy(message, "");
 			strcpy(loginMessage, "0");
 		}
-		resMes = SendData(socket_id, message, MAXDATASIZE);
+		resMes = SendData(request->sockfd, message, MAXDATASIZE);
 
 	}
 
@@ -335,7 +335,7 @@ void ClientConnectionsHandler(struct Request *request, int socket_id) {
 
 	int clientFinished = 0;
 	while(clientFinished != 1){
-		ReceiveData(socket_id, message, MAXDATASIZE);
+		ReceiveData(request->sockfd, message, MAXDATASIZE);
 
 		if (strcmp("1", message) == 0){
 	    // Start Minesweeper
@@ -349,7 +349,7 @@ void ClientConnectionsHandler(struct Request *request, int socket_id) {
 	  } else if (strcmp("3", message) == 0){
 	    // Quit
 			printf("Client Disconnecting\n");
-	    close(socket_id);
+	    close(request->sockfd);
 			pthread_join(client_thread, NULL);
 			clientFinished = 1;
 	  }
