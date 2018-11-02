@@ -343,7 +343,7 @@ void FlipTile(struct GameState *gameState, int loc_x, int loc_y, int socket_id) 
 		if (gameState->tiles[x_tile][y_tile].is_mine == true) {
 			// Game Over
 			printf("Game Over: Mine at %d/%d\n", x_tile, y_tile);
-			(*gameState).GameOver = true;
+			gameState->GameOver = true;
 
 			flipMessage[0] = '1';
 			SendData(socket_id, flipMessage, sizeof flipMessage);
