@@ -26,6 +26,7 @@ void FlipSurrounds(struct GameState*, int, int);
 void GameOverMsg(int, int, bool);
 void SortLeaderboard(struct LeaderboardEntry*);
 void AddLeaderboardEntry(char[MAXDATASIZE], int, bool);
+void LockWriting(char);
 
 
 #endif //__MINESWEEPERSERVER_H__

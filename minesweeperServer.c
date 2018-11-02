@@ -17,7 +17,7 @@
 #define TOTAL_CONNECTIONS 10
 
 #define LOCK 1
-#define UNLOCK 0c
+#define UNLOCK 0
 
 // Define what a tile is
 typedef struct Tile{
