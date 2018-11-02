@@ -12,11 +12,16 @@
 
 #define MAXDATASIZE 256
 
+// Setup port and connection address
+int portNum, clientConnect;
+char * inetAddr;
+struct sockaddr_in serverAddress;
+
+void HandleExitSignal();
+
 int main(int argc, char* argv[]){
-  // Setup port and connection address
-  int portNum, clientConnect;
-  char * inetAddr;
-  struct sockaddr_in serverAddress;
+  // Setup Handle Exit Signal
+	signal(SIGINT, HandleExitSignal);
 
   if (argc == 3) {
     // User provided IP and Port
@@ -54,14 +59,18 @@ int main(int argc, char* argv[]){
   }
   fprintf(stderr, "Connected to server: %s\n", inetAddr);
 
-  // Read connection status
-  // read_size = ReceiveData(clientConnect, message, MAXDATASIZE);
-  // fprintf(stderr, "%s\n\n", message);
-
   StartMinesweeper(clientConnect);
 
   // Close connection
+  printf("Closing client connection.");
   close(clientConnect);
+  exit(1);
+  return 1;
+}
 
-  return 0;
+void HandleExitSignal() {
+	if(clientConnect){
+		close(clientConnect);
+	}
+	exit(1);
 }

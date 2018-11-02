@@ -30,6 +30,11 @@ struct GameState {
 	Tile tiles[NUM_TILES_X] [NUM_TILES_Y];
 }GameState;
 
+
+int leaderboard_rc = 0;
+pthread_mutex_t leaderboard_mutex_write, leaderboard_mutex_read, leaderboard_mutex_rc;
+
+
 char gameString[MAXGAMESIZE];
 time_t start_time, end_time;
 
@@ -37,6 +42,11 @@ time_t start_time, end_time;
 struct LeaderboardEntry leaderboard[TOTAL_CONNECTIONS];
 
 void MinesweeperMenu(int socket_id){
+	// Initialise mutexes
+		leaderboard_rc = 0;
+	pthread_mutex_init(&leaderboard_mutex_read, NULL);
+	pthread_mutex_init(&leaderboard_mutex_write, NULL);
+	pthread_mutex_init(&leaderboard_mutex_rc, NULL);
 	// Start timer
 	start_time = time(NULL);
 
@@ -205,6 +215,10 @@ void FormatGameState(struct GameState gamestate, char* gameString){
 	}
 }
 
+
+
+
+
 void AddLeaderboardEntry(char username[MAXDATASIZE], int totalTime, bool won) {
 	bool exists = false;
 	int freeLoc = -1;
@@ -331,25 +345,25 @@ void FlipTile(struct GameState *gameState, int loc_x, int loc_y, int socket_id) 
 
 			GameOverMsg(socket_id, seconds_taken, false);
 
-			for(int x = 0; x < NUM_TILES_X; x++){
-				for (int y = 0; y < NUM_TILES_Y; y++){
-					if ((*gameState).tiles[x][y].is_mine == true){
-						(*gameState).tiles[x][y].revealed = true;
-					} else {
-						(*gameState).tiles[x][y].revealed = false;
-					}
+		for(int x = 0; x < NUM_TILES_X; x++){
+			for (int y = 0; y < NUM_TILES_Y; y++){
+				if (gameState->tiles[x][y].is_mine == true){
+					gameState->tiles[x][y].revealed = true;
+				} else {
+					gameState->tiles[x][y].revealed = false;
 				}
 			}
-		} else {
-			// If tile is not a mine - flip the tile, to reveal number below
-			(*gameState).tiles[x_tile][y_tile].revealed = true;
-			printf("Flipped Tile %d/%d\n", x_tile, y_tile);
+		}
+	} else {
+		// If tile is not a mine - flip the tile, to reveal number below
+		gameState->tiles[x_tile][y_tile].revealed = true;
+		printf("Flipped Tile %d/%d\n", x_tile, y_tile);
 
 			flipMessage[0] = '0';
 			SendData(socket_id, flipMessage, sizeof flipMessage);
 
 			// If tile has 0 adjacent mines, flip surrounding 8 neighbours
-			if ((*gameState).tiles[x_tile][y_tile].adjacent_mines == 0) {
+			if (gameState->tiles[x_tile][y_tile].adjacent_mines == 0) {
 				FlipSurrounds(gameState, loc_x, loc_y);
 			}
 		}
@@ -364,9 +378,9 @@ void FlipSurrounds(struct GameState *gameState, int loc_x, int loc_y) {
 		for (int b = -1; b < 2; b++){
 			if((a + loc_x > -1) && (a + loc_x < NUM_TILES_X)){
 				if((b + loc_y > -1) && (b + loc_y < NUM_TILES_Y)){
-					if ((*gameState).tiles[loc_x+a][loc_y+b].revealed == false) {
-						(*gameState).tiles[loc_x+a][loc_y+b].revealed = true;
-						if ((*gameState).tiles[loc_x+a][loc_y+b].adjacent_mines == 0) {
+					if (gameState->tiles[loc_x+a][loc_y+b].revealed == false) {
+						gameState->tiles[loc_x+a][loc_y+b].revealed = true;
+						if (gameState->tiles[loc_x+a][loc_y+b].adjacent_mines == 0) {
 							FlipSurrounds(gameState, loc_x+a, loc_y+b);
 						}
 					}
@@ -381,20 +395,20 @@ void FlagTile(struct GameState *gameState, int loc_x, int loc_y, int socket_id) 
 	char flagMessage[2];
 
 	// Check to see if tile is mine
-	if ((*gameState).tiles[loc_x][loc_y].is_mine == true) {
+	if (gameState->tiles[loc_x][loc_y].is_mine == true) {
 		// Flag placed successfully
 		printf("Flag Placed! Mine at %d/%d\n", loc_x, loc_y);
 
 		flagMessage[0] = '1';
 
-		(*gameState).tiles[loc_x][loc_y].revealed = true;
-		(*gameState).tiles[loc_x][loc_y].flag_placed = true;
-		(*gameState).minesLeft = (*gameState).minesLeft - 1;
+		gameState->tiles[loc_x][loc_y].revealed = true;
+		gameState->tiles[loc_x][loc_y].flag_placed = true;
+		gameState->minesLeft = gameState->minesLeft - 1;
 
-		printf("Mines left: %d\n", (*gameState).minesLeft);
+		printf("Mines left: %d\n", gameState->minesLeft);
 
 		// Successfully placed a flag - Check for win state
-		if ((*gameState).minesLeft == 0) {
+		if (gameState->minesLeft == 0) {
 			// WE WIN! Stop timer, send message and time
 			end_time = time(NULL);
 			int seconds_taken = difftime(start_time, end_time);
@@ -430,5 +444,16 @@ void GameOverMsg(int socket_id, int time, bool won){
 	} else {
 		// Send Gameover
 		AddLeaderboardEntry(message, time, won);
+	}
+}
+
+
+void LockWriting(char locking){
+	if (strcmp(locking, "LOCK") == 0){
+		pthread_mutex_lock(&leaderboard_mutex_write);
+		pthread_mutex_lock(&leaderboard_mutex_read);
+	} else {
+		pthread_mutex_unlock(&leaderboard_mutex_write);
+		pthread_mutex_unlock(&leaderboard_mutex_read);
 	}
 }
