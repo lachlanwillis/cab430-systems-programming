@@ -456,7 +456,7 @@ void FlagTile(struct GameState *gameState, int loc_x, int loc_y, int socket_id) 
 
 				// Handle time
 				end_time = time(NULL);
-				int seconds_taken = difftime(start_time, end_time);
+				int seconds_taken = difftime(end_time, start_time);
 				write(socket_id, &seconds_taken, sizeof(seconds_taken));
 
 				GameOverMsg(socket_id, seconds_taken, true);

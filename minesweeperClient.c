@@ -321,10 +321,6 @@ void PlayMinesweeper(int serverSocket){
           playingGame = 0;
         }
 
-        // ReceiveGameState(serverSocket, gameString);
-        // system("clear");
-        DrawGame(gameString);
-
         flagOption = true;
 				enteringOption = 0;
       } else if (strcmp("Q", selectionOption) == 0){
