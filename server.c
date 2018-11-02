@@ -8,7 +8,7 @@
 
 #include <string.h>
 #include <inttypes.h>
-#include <malloc.h>
+// #include <malloc.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -46,6 +46,7 @@ void MinesweeperMenu(int);
 void SetupThreadPool();
 void SetupMutex();
 void HandleConnections(void *);
+void ClientRequestAdd(int socket_id, int num_request, pthread_mutex_t *pthread_mutex, pthread_cond_t *pthread_cond_variable);
 
 // Setup server, client socket variables
 int serverListen, clientConnect, portNum;
