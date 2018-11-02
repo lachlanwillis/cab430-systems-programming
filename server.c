@@ -274,7 +274,6 @@ void HandleExitSignal() {
 
 // Handle client connections
 void ClientConnectionsHandler(struct Request *request, int socket_id) {
-	puts("Starting reading auth file\n");
 	char message[MAXDATASIZE], loginMessage[MAXDATASIZE];
 	int read_size;
 	//int socket_id = *((int *)args);
@@ -298,7 +297,6 @@ void ClientConnectionsHandler(struct Request *request, int socket_id) {
 
 		memset(message,0,sizeof(message));
 
-		printf("Waiting for Username %lu\n", client_thread[socket_id]);
 		read_size = ReceiveData(request->sockfd, message, MAXDATASIZE);
 
 		fprintf(stderr, "Received username: %s\n", message);
@@ -339,12 +337,12 @@ void ClientConnectionsHandler(struct Request *request, int socket_id) {
 
 		if (strcmp("1", message) == 0){
 	    // Start Minesweeper
-			MinesweeperMenu(socket_id);
+			MinesweeperMenu(request->sockfd);
 			printf("Ended, waiting for next command\n");
 	  } else if (strcmp("2", message) == 0){
 	    // Show Leaderboard
 			printf("Sending leaderboard\n");
-			SendLeaderboard(socket_id);
+			SendLeaderboard(request->sockfd);
 			printf("Sent leaderboard\n");
 	  } else if (strcmp("3", message) == 0){
 	    // Quit
