@@ -35,6 +35,11 @@ struct GameState {
 char gameString[MAXGAMESIZE];
 time_t start_time, end_time;
 
+
+
+
+
+
 void MinesweeperMenu(int socket_id){
 	// Start timer
 	start_time = time(NULL);
@@ -265,27 +270,27 @@ void FlipTile(struct GameState *gameState, int loc_x, int loc_y){
 	x_tile = loc_x;
 	y_tile = loc_y;
 	// Check to see if tile is a mine
-	if( (*gameState).tiles[x_tile][y_tile].is_mine == true){
+	if(gameState->tiles[x_tile][y_tile].is_mine == true){
 		// Game Over
 		printf("Game Over: Mine at %d/%d\n", x_tile, y_tile);
-		(*gameState).GameOver = true;
+		gameState->GameOver = true;
 		for(int x = 0; x < NUM_TILES_X; x++){
 			for (int y = 0; y < NUM_TILES_Y; y++){
-				if ((*gameState).tiles[x][y].is_mine == true){
-					(*gameState).tiles[x][y].revealed = true;
+				if (gameState->tiles[x][y].is_mine == true){
+					gameState->tiles[x][y].revealed = true;
 				} else {
-					(*gameState).tiles[x][y].revealed = false;
+					gameState->tiles[x][y].revealed = false;
 				}
 			}
 		}
 	} else {
 		// If tile is not a mine - flip the tile, to reveal number below
-		(*gameState).tiles[x_tile][y_tile].revealed = true;
+		gameState->tiles[x_tile][y_tile].revealed = true;
 		printf("Flipped Tile %d/%d\n", x_tile, y_tile);
 	}
-	
+
 	// If tile has 0 adjacent mines, flip surrounding 8 neighbours
-	if ((*gameState).tiles[x_tile][y_tile].adjacent_mines == 0) {
+	if (gameState->tiles[x_tile][y_tile].adjacent_mines == 0) {
 		FlipSurrounds(gameState, loc_x, loc_y);
 	}
 }
@@ -295,9 +300,9 @@ void FlipSurrounds(struct GameState *gameState, int loc_x, int loc_y) {
 		for (int b = -1; b < 2; b++){
 			if((a + loc_x > -1) && (a + loc_x < NUM_TILES_X)){
 				if((b + loc_y > -1) && (b + loc_y < NUM_TILES_Y)){
-					if ((*gameState).tiles[loc_x+a][loc_y+b].revealed == false) {
-						(*gameState).tiles[loc_x+a][loc_y+b].revealed = true;
-						if ((*gameState).tiles[loc_x+a][loc_y+b].adjacent_mines == 0) {
+					if (gameState->tiles[loc_x+a][loc_y+b].revealed == false) {
+						gameState->tiles[loc_x+a][loc_y+b].revealed = true;
+						if (gameState->tiles[loc_x+a][loc_y+b].adjacent_mines == 0) {
 							FlipSurrounds(gameState, loc_x+a, loc_y+b);
 						}
 					}
@@ -312,19 +317,19 @@ void FlagTile(struct GameState *gameState, int loc_x, int loc_y, int socket_id){
 	char flagMessage[2];
 
 	// Check to see if tile is mine
-	if ((*gameState).tiles[loc_x][loc_y].is_mine == true) {
+	if (gameState->tiles[loc_x][loc_y].is_mine == true) {
 		// Flag placed successfully
 		printf("Flag Placed! Mine at %d/%d\n", loc_x, loc_y);
 
 		flagMessage[0] = '1';
 
-		(*gameState).tiles[loc_x][loc_y].revealed = true;
-		(*gameState).minesLeft = (*gameState).minesLeft - 1;
+		gameState->tiles[loc_x][loc_y].revealed = true;
+		gameState->minesLeft = gameState->minesLeft - 1;
 
-		printf("Mines left: %d\n", (*gameState).minesLeft);
+		printf("Mines left: %d\n", gameState->minesLeft);
 
 		// Successfully placed a flag - Check for win state
-		if ((*gameState).minesLeft == 0) {
+		if (gameState->minesLeft == 0) {
 			// WE WIN! Stop timer, send message and time
 			end_time = time(NULL);
 			int seconds_taken = difftime(start_time, end_time);
