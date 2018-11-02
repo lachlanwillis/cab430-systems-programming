@@ -85,7 +85,7 @@ void StartMinesweeper(int serverSocket) {
       strcpy(message, "3");
       commOption = SendData(serverSocket, message, MAXDATASIZE);
       system("clear");
-      exit(EXIT_SUCCESS);
+      break;
     }
   }
 }

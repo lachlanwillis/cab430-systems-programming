@@ -8,7 +8,7 @@
 
 #include <string.h>
 #include <inttypes.h>
-#include <malloc.h>
+// #include <malloc.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -47,6 +47,7 @@ void SetupThreadPool();
 void SetupMutex();
 void* HandleConnections(void *);
 void ClientRequestAdd(int socket_id, int num_request, pthread_mutex_t *pthread_mutex, pthread_cond_t *pthread_cond_variable);
+void CloseThreads();
 
 // Setup server, client socket variables
 int serverListen, clientConnect, portNum;
@@ -75,7 +76,7 @@ int main(int argc, char* argv[]) {
 	srand(RANDOM_NUM_SEED);
 
 	// Setup Handle Exit Signal
-	//signal(SIGINT, HandleExitSignal);
+	signal(SIGINT, HandleExitSignal);
 
 	// Handle Port Connection
 	if (argc < 2) {
@@ -124,18 +125,11 @@ int main(int argc, char* argv[]) {
 			printf("Server: received connection from %s\n", inet_ntoa(client.sin_addr));
 			ClientRequestAdd(clientConnect, totalRequests++, &request_mutex, &request_cond);
 		}
-
-
-		// Create a thread to accept client
-		// TODO: Threading does not work with multiple concurrent users.
-
-		// pthread_attr_init(&attr);
-		// pthread_create(&client_thread, &attr, ClientConnectionsHandler, (void *) &clientConnect);
-
-		// pthread_join(client_thread, NULL);
 	}
 
-	close(clientConnect);
+	close(serverListen);
+	CloseThreads();
+	return(1);
 }
 
 // Gets a request from the Queue
@@ -145,7 +139,7 @@ struct Request *GetRequests(pthread_mutex_t *pthread_mutex){
 	pthread_mutex_lock(pthread_mutex);
 	// puts("Getting request\n");
 	if (clientTotalRequests > 0){
-		puts("Finding request\n");
+		puts("Finding request");
 		request = requests;
 		requests = requests->next;
 		if (requests == NULL){
@@ -161,11 +155,8 @@ struct Request *GetRequests(pthread_mutex_t *pthread_mutex){
 	}
 
 	// unlock the Mutex
-	puts("Got Request\n");
 	pthread_mutex_unlock(pthread_mutex);
 	return request;
-
-
 }
 
 
@@ -186,8 +177,6 @@ void SetupMutex() {
 	pthread_mutexattr_init(&recursiveOptions);
 	pthread_mutexattr_settype(&recursiveOptions, PTHREAD_MUTEX_RECURSIVE);
 	pthread_mutex_init(&request_mutex, &recursiveOptions);
-
-
 }
 
 
@@ -219,15 +208,13 @@ void *HandleConnections(void *args){
 		}
 
 	}
-
-
 }
 
 
 // Function for adding client requests
 void ClientRequestAdd(int socket_id, int num_request, pthread_mutex_t *pthread_mutex, pthread_cond_t *pthread_cond_variable){
 	// Create a request structure for clients connection
-	puts("Starting Adding Request\n");
+	puts("Starting adding request");
 	struct Request *request;
 
 	request = malloc(sizeof(struct Request));
@@ -239,7 +226,7 @@ void ClientRequestAdd(int socket_id, int num_request, pthread_mutex_t *pthread_m
 
 	// Set the next value of the request
 	pthread_mutex_lock(pthread_mutex);
-	puts("checking connection\n");
+	puts("Checking connection");
 	if (clientTotalRequests == 0){
 		requests = request;
 		last_request = request;
@@ -248,30 +235,13 @@ void ClientRequestAdd(int socket_id, int num_request, pthread_mutex_t *pthread_m
 		last_request->next = request;
 		last_request = request;
 	}
-	puts("connection checked\n");
+	puts("Connection checked");
 	clientTotalRequests++;
 
 	// Unlock mutex and send signal
 	pthread_mutex_unlock(pthread_mutex);
 	pthread_cond_signal(pthread_cond_variable);
 
-}
-
-
-
-
-// TODO: DOESNT WORK AS EXPECTED
-void HandleExitSignal() {
-	// Close socket connection
-	printf("\n\nClosing server and client sockets\n");
-	close (clientConnect);
-	close (serverListen);
-
-	// Kill threads and exit program
-	printf("Exiting program...\n");
-
-	// Exit program
-	exit(1);
 }
 
 // Handle client connections
@@ -355,4 +325,21 @@ void ClientConnectionsHandler(struct Request *request, int socket_id) {
 	  }
 	}
 
+}
+
+void CloseThreads(){
+	for(int i = 0; i < THREAD_POOL_SIZE; i++ ){
+		if (i < THREAD_POOL_SIZE){
+			pthread_cancel(client_thread[i]);
+		}
+	};
+}
+
+// Handle a SIGINT (Ctrl - C) interrupt, free memory and close connections.
+void HandleExitSignal(){
+	printf("\n\nInterrupt recieved. Closing connection.\n\n");
+	CloseThreads();
+	close(serverListen);
+	printf("Memory successfully free'd and socket closed... Exiting.\n");
+	exit(1);
 }
