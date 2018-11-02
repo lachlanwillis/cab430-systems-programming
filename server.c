@@ -38,7 +38,7 @@ struct Request {
 	struct Request *next;
 };
 
-void* ClientConnectionsHandler(struct Request, int);
+void* ClientConnectionsHandler(struct Request*, int);
 void HandleExitSignal();
 void ClientCommunicationHandler(int, char *[256]);
 int NumAuths(char *);
@@ -63,9 +63,9 @@ int attr[THREAD_POOL_SIZE];
 // Setup mutex variables
 int leaderboard_rc = 0;
 pthread_mutex_t leaderboard_mutex_write, leaderboard_mutex_read, leaderboard_mutex_rc;
-pthread_mutex_t request_mutex = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
+pthread_mutex_t request_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-pthread_cond_init request_cond = PTHREAD_COND_INITIALIZER;
+pthread_cond_t request_cond = PTHREAD_COND_INITIALIZER;
 
 
 
@@ -306,7 +306,7 @@ void HandleExitSignal() {
 }
 
 // Handle client connections
-void* ClientConnectionsHandler(struct Request request, int socket_id) {
+void* ClientConnectionsHandler(struct Request *request, int socket_id) {
 	char message[MAXDATASIZE], loginMessage[MAXDATASIZE];
 	int read_size;
 	//int socket_id = *((int *)args);
