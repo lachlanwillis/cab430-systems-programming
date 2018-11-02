@@ -30,6 +30,11 @@ struct GameState {
 	Tile tiles[NUM_TILES_X] [NUM_TILES_Y];
 }GameState;
 
+
+int leaderboard_rc = 0;
+pthread_mutex_t leaderboard_mutex_write, leaderboard_mutex_read, leaderboard_mutex_rc;
+
+
 char gameString[MAXGAMESIZE];
 time_t start_time, end_time;
 
@@ -37,6 +42,11 @@ time_t start_time, end_time;
 struct LeaderboardEntry leaderboard[TOTAL_CONNECTIONS];
 
 void MinesweeperMenu(int socket_id){
+	// Initialise mutexes
+		leaderboard_rc = 0;
+	pthread_mutex_init(&leaderboard_mutex_read, NULL);
+	pthread_mutex_init(&leaderboard_mutex_write, NULL);
+	pthread_mutex_init(&leaderboard_mutex_rc, NULL);
 	// Start timer
 	start_time = time(NULL);
 
@@ -201,6 +211,10 @@ void FormatGameState(struct GameState gamestate, char* gameString){
 		gameString[83] = gamestate.minesLeft+'0';
 	}
 }
+
+
+
+
 
 void AddLeaderboardEntry(char username[MAXDATASIZE], int totalTime, bool won) {
 	bool exists = false;
@@ -422,5 +436,16 @@ void GameOverMsg(int socket_id, int time, bool won){
 	} else {
 		// Send Gameover
 		AddLeaderboardEntry(message, time, won);
+	}
+}
+
+
+void LockWriting(char locking){
+	if (strcmp(locking, "LOCK") == 0){
+		pthread_mutex_lock(&leaderboard_mutex_write);
+		pthread_mutex_lock(&leaderboard_mutex_read);
+	} else {
+		pthread_mutex_unlock(&leaderboard_mutex_write);
+		pthread_mutex_unlock(&leaderboard_mutex_read);
 	}
 }

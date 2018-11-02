@@ -62,9 +62,8 @@ pthread_t client_thread[THREAD_POOL_SIZE];
 int attr[THREAD_POOL_SIZE];
 
 // Setup mutex variables
-int leaderboard_rc = 0;
-pthread_mutex_t leaderboard_mutex_write, leaderboard_mutex_read, leaderboard_mutex_rc;
-pthread_mutex_t request_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t request_mutex;
+pthread_mutexattr_t recursiveOptions;
 
 pthread_cond_t request_cond = PTHREAD_COND_INITIALIZER;
 
@@ -87,8 +86,9 @@ int main(int argc, char* argv[]) {
 		printf("Port Provided - using %d\n", portNum);
 	}
 
-	SetupThreadPool();
+
 	SetupMutex();
+	SetupThreadPool();
 
 	// Generate server socket
 	if ((serverListen = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
@@ -142,7 +142,7 @@ int main(int argc, char* argv[]) {
 struct Request *GetRequests(pthread_mutex_t *pthread_mutex){
 	struct Request *request;
 	// puts("Getting Request\n");
-	// pthread_mutex_lock(pthread_mutex);
+	pthread_mutex_lock(pthread_mutex);
 	// puts("Getting request\n");
 	if (clientTotalRequests > 0){
 		puts("Finding request\n");
@@ -162,7 +162,7 @@ struct Request *GetRequests(pthread_mutex_t *pthread_mutex){
 
 	// unlock the Mutex
 	puts("Got Request\n");
-	// pthread_mutex_unlock(pthread_mutex);
+	pthread_mutex_unlock(pthread_mutex);
 	return request;
 
 
@@ -182,10 +182,12 @@ void SetupThreadPool(){
 void SetupMutex() {
 	// Setup the Mutexes
 	puts("Defining Mutexs\n");
-	leaderboard_rc = 0;
-	pthread_mutex_init(&leaderboard_mutex_rc, NULL);
-	pthread_mutex_init(&leaderboard_mutex_read, NULL);
-	pthread_mutex_init(&leaderboard_mutex_write, NULL);
+
+	pthread_mutexattr_init(&recursiveOptions);
+	pthread_mutexattr_settype(&recursiveOptions, PTHREAD_MUTEX_RECURSIVE);
+	pthread_mutex_init(&request_mutex, &recursiveOptions);
+
+
 }
 
 
