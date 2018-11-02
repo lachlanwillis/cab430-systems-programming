@@ -8,7 +8,7 @@
 
 #include <string.h>
 #include <inttypes.h>
-// #include <malloc.h>
+#include <malloc.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -38,21 +38,21 @@ struct Request {
 	struct Request *next;
 };
 
-void* ClientConnectionsHandler(struct Request*, int);
+void ClientConnectionsHandler(struct Request*, int);
 void HandleExitSignal();
 void ClientCommunicationHandler(int, char *[256]);
 int NumAuths(char *);
 void MinesweeperMenu(int);
 void SetupThreadPool();
 void SetupMutex();
-void HandleConnections(void *);
+void* HandleConnections(void *);
 void ClientRequestAdd(int socket_id, int num_request, pthread_mutex_t *pthread_mutex, pthread_cond_t *pthread_cond_variable);
 
 // Setup server, client socket variables
 int serverListen, clientConnect, portNum;
 struct sockaddr_in serv_addr, client;
 socklen_t sin_size;
-int clientTotalRequests;
+int clientTotalRequests = 0;
 
 struct Request *requests = NULL;
 struct Request *last_request = NULL;
@@ -76,7 +76,7 @@ int main(int argc, char* argv[]) {
 	srand(RANDOM_NUM_SEED);
 
 	// Setup Handle Exit Signal
-	signal(SIGINT, HandleExitSignal);
+	//signal(SIGINT, HandleExitSignal);
 
 	// Handle Port Connection
 	if (argc < 2) {
@@ -88,6 +88,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	SetupThreadPool();
+	SetupMutex();
 
 	// Generate server socket
 	if ((serverListen = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
@@ -121,7 +122,7 @@ int main(int argc, char* argv[]) {
 			perror("accept");
 		} else {
 			printf("Server: received connection from %s\n", inet_ntoa(client.sin_addr));
-			ClientRequestAdd(clientConnect, clientTotalRequests++, &request_mutex, &request_cond);
+			ClientRequestAdd(clientConnect, clientTotalRequests, &request_mutex, &request_cond);
 		}
 
 
@@ -139,6 +140,7 @@ int main(int argc, char* argv[]) {
 
 // Gets a request from the Queue
 struct Request *GetRequests(pthread_mutex_t *pthread_mutex){
+	puts("Getting request\n");
 	struct Request *request;
 	pthread_mutex_lock(pthread_mutex);
 
@@ -149,7 +151,7 @@ struct Request *GetRequests(pthread_mutex_t *pthread_mutex){
 			last_request = NULL;
 
 		}
-		clientTotalRequests++;
+		clientTotalRequests--;
 
 	} else {
 		// No clients in the Queue
@@ -157,6 +159,7 @@ struct Request *GetRequests(pthread_mutex_t *pthread_mutex){
 	}
 
 	// unlock the Mutex
+	puts("Got Request\n");
 	pthread_mutex_unlock(pthread_mutex);
 	return request;
 
@@ -166,6 +169,7 @@ struct Request *GetRequests(pthread_mutex_t *pthread_mutex){
 
 // Setup the thread pool
 void SetupThreadPool(){
+	puts("Creating Threads\n");
 	for (int i = 0; i < THREAD_POOL_SIZE; i++){
 		attr[i] = i;
 		pthread_create(&client_thread[i], NULL, HandleConnections, (void *) &attr[i]);
@@ -175,6 +179,7 @@ void SetupThreadPool(){
 
 void SetupMutex() {
 	// Setup the Mutexes
+	puts("Defining Mutexs\n");
 	leaderboard_rc = 0;
 	pthread_mutex_init(&leaderboard_mutex_rc, NULL);
 	pthread_mutex_init(&leaderboard_mutex_read, NULL);
@@ -182,21 +187,25 @@ void SetupMutex() {
 }
 
 
-void HandleConnections(void *args){
+void *HandleConnections(void *args){
 	struct Request *request;
 	int thread_id = *((int*) args);
 
 	// lock the request mutex
 	pthread_mutex_lock(&request_mutex);
-
+	printf("Thread %d is waiting for a connection\n", thread_id);
 	while(1){
+
 		if (clientTotalRequests > 0) {
+
 			request = GetRequests(&request_mutex);
 			// Check if not null
 			if (request){
+				puts("Got Request");
 				pthread_mutex_unlock(&request_mutex);
 				// Handle the request here
 				ClientConnectionsHandler(request, thread_id);
+				free(request);
 				// Lock the mutex again
 				pthread_mutex_lock(&request_mutex);
 
@@ -214,23 +223,30 @@ void HandleConnections(void *args){
 // Function for adding client requests
 void ClientRequestAdd(int socket_id, int num_request, pthread_mutex_t *pthread_mutex, pthread_cond_t *pthread_cond_variable){
 	// Create a request structure for clients connection
+	puts("Starting Adding Request\n");
 	struct Request *request;
 
 	request = malloc(sizeof(struct Request));
 	// Set values of request struct
+
 	request->number = num_request;
 	request->sockfd = socket_id;
 	request->next = NULL;
 
 	// Set the next value of the request
 	pthread_mutex_lock(pthread_mutex);
+	puts("checking connection\n");
 	if (clientTotalRequests == 0){
+		puts("A\n");
 		requests = request;
 		last_request = request;
+
 	} else {
+		printf("B: %d\n", clientTotalRequests);
 		last_request->next = request;
 		last_request = request;
 	}
+	puts("connection checked\n");
 	clientTotalRequests++;
 
 	// Unlock mutex and send signal
@@ -246,21 +262,19 @@ void ClientRequestAdd(int socket_id, int num_request, pthread_mutex_t *pthread_m
 void HandleExitSignal() {
 	// Close socket connection
 	printf("\n\nClosing server and client sockets\n");
-	shutdown(clientConnect, 1);
-	shutdown(serverListen, 1);
 	close (clientConnect);
 	close (serverListen);
 
 	// Kill threads and exit program
-	printf("Killing threads, exiting program...\n");
-	pthread_exit(&client_thread);
+	printf("Exiting program...\n");
 
 	// Exit program
-	exit(0);
+	exit(1);
 }
 
 // Handle client connections
-void* ClientConnectionsHandler(struct Request *request, int socket_id) {
+void ClientConnectionsHandler(struct Request *request, int socket_id) {
+	puts("Starting reading auth file\n");
 	char message[MAXDATASIZE], loginMessage[MAXDATASIZE];
 	int read_size;
 	//int socket_id = *((int *)args);
@@ -340,6 +354,4 @@ void* ClientConnectionsHandler(struct Request *request, int socket_id) {
 	  }
 	}
 
-	// Generate Game State - TODO: Expand for multithreading
-	//struct GameState gameState1;
 }
