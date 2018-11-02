@@ -16,6 +16,9 @@
 #define MAXDATASIZE 256
 #define TOTAL_CONNECTIONS 10
 
+#define LOCK 1
+#define UNLOCK 0c
+
 // Define what a tile is
 typedef struct Tile{
 	bool flag_placed;
@@ -222,6 +225,7 @@ void FormatGameState(struct GameState gamestate, char* gameString){
 void AddLeaderboardEntry(char username[MAXDATASIZE], int totalTime, bool won) {
 	bool exists = false;
 	int freeLoc = -1;
+	LockWriting(LOCK);
 
 	// If leaderboard user exists, update data
 	for (int i = 0; i < TOTAL_CONNECTIONS; i ++) {
@@ -242,6 +246,7 @@ void AddLeaderboardEntry(char username[MAXDATASIZE], int totalTime, bool won) {
 		for (int i = 0; i < TOTAL_CONNECTIONS; i ++) {
 			if (leaderboard[i].username[0] == '\0') {
 				freeLoc = i;
+				LockWriting(UNLOCK);
 				break;
 			}
 		}
@@ -253,10 +258,12 @@ void AddLeaderboardEntry(char username[MAXDATASIZE], int totalTime, bool won) {
 			leaderboard[freeLoc].played = 1;
 		}
 	}
+	LockWriting(UNLOCK);
 }
 
 // Function sorts the leaderboard in descending order by seconds, total won, username (alpha)
 void SortLeaderboard(struct LeaderboardEntry *leaderboard) {
+	LockWriting(LOCK);
 	int x = 0, y;
 	struct LeaderboardEntry temp;
 
@@ -298,6 +305,7 @@ void SortLeaderboard(struct LeaderboardEntry *leaderboard) {
 			}
 		}
 	}
+	LockWriting(UNLOCK);
 }
 
 // Function formats the leaderboard and sends it to the client
@@ -449,7 +457,7 @@ void GameOverMsg(int socket_id, int time, bool won){
 
 
 void LockWriting(char locking){
-	if (strcmp(locking, "LOCK") == 0){
+	if (locking){
 		pthread_mutex_lock(&leaderboard_mutex_write);
 		pthread_mutex_lock(&leaderboard_mutex_read);
 	} else {
