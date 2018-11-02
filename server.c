@@ -38,7 +38,7 @@ struct Request {
 	struct Request *next;
 };
 
-void* ClientConnectionsHandler(void *);
+void* ClientConnectionsHandler(struct Request, int);
 void HandleExitSignal();
 void ClientCommunicationHandler(int, char *[256]);
 int NumAuths(char *);
@@ -58,7 +58,7 @@ struct Request *last_request = NULL;
 
 // Setup pthread variables
 pthread_t client_thread[THREAD_POOL_SIZE];
-pthread_attr_t attr[THREAD_POOL_SIZE];
+int attr[THREAD_POOL_SIZE];
 
 // Setup mutex variables
 int leaderboard_rc = 0;
@@ -183,6 +183,31 @@ int main(int argc, char* argv[]) {
 	close(clientConnect);
 }
 
+// Gets a request from the Queue
+struct Request *GetRequests(pthread_mutex_t *pthread_mutex){
+	struct Request *request;
+	pthread_mutex_lock(pthread_mutex);
+
+	if (clientTotalRequests > 0){
+		request = requests;
+		requests = requests->next;
+		if (requests == NULL){
+			last_request = NULL;
+
+		}
+		clientTotalRequests++;
+
+	} else {
+		// No clients in the Queue
+		request = NULL;
+	}
+
+	// unlock the Mutex
+	pthread_mutex_unlock(pthread_mutex);
+	return request;
+
+
+}
 
 
 // Setup the thread pool
@@ -211,7 +236,7 @@ void HandleConnections(void *args){
 	pthread_mutex_lock(&request_mutex);
 
 	while(1){
-		if (clientRequests > 0) {
+		if (clientTotalRequests > 0) {
 			request = GetRequests(&request_mutex);
 			// Check if not null
 			if (request){
@@ -260,31 +285,6 @@ void ClientRequestAdd(int socket_id, int num_request, pthread_mutex_t *pthread_m
 
 }
 
-// Gets a request from the Queue
-struct Request *GetRequests(pthread_mutex_t *pthread_mutex){
-	struct Request *request;
-	pthread_mutex_lock(pthread_mutex);
-
-	if (clientTotalRequests > 0){
-		request = requests;
-		requests = requests->next;
-		if (requests == NULL){
-			last_request = NULL;
-
-		}
-		clientTotalRequests++;
-
-	} else {
-		// No clients in the Queue
-		request = NULL;
-	}
-
-	// unlock the Mutex
-	pthread_mutex_unlock(pthread_mutex);
-	return request;
-
-
-}
 
 
 
