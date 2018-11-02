@@ -474,6 +474,10 @@ void FlagTile(struct GameState *gameState, int loc_x, int loc_y, int socket_id) 
 			printf("No mine at: %d, %d\n", loc_x, loc_y);
 
 			flagMessage[0] = '0';
+			if ((shortRetval = SendData(socket_id, flagMessage, sizeof flagMessage)) <= 0) {
+				close(socket_id);
+				return;
+			}
 		}
 	} else {
 		// Tile already revealed
