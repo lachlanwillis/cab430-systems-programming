@@ -69,6 +69,7 @@ int main(int argc, char* argv[]){
 }
 
 void HandleExitSignal() {
+  printf("\n\nInterrupt recieved. Closing connection.\n\n");
 	if(clientConnect){
 		close(clientConnect);
 	}
