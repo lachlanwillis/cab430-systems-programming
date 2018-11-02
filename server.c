@@ -334,7 +334,6 @@ void ClientConnectionsHandler(struct Request *request, int socket_id) {
 	    // Quit
 			printf("Client Disconnecting\n");
 	    close(request->sockfd);
-			pthread_join(client_thread, NULL);
 			clientFinished = 1;
 	  }
 	}
@@ -346,7 +345,7 @@ void CloseThreads(){
 		if (i < THREAD_POOL_SIZE){
 			pthread_cancel(client_thread[i]);
 		}
-	};
+	}
 }
 
 // Handle a SIGINT (Ctrl - C) interrupt, free memory and close connections.
