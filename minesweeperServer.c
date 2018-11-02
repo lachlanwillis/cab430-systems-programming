@@ -157,12 +157,13 @@ struct GameState PlaceMines(){
 
 	for (int i = 0; i < NUM_MINES; i++) {
 		// Set mine locations
+		LockWriting(LOCK);
 		int x, y;
 		do {
 			x = rand() % NUM_TILES_X;
 			y = rand() % NUM_TILES_Y;
 		} while (TileContainsMine(x, y, gamestate));
-
+		LockWriting(UNLOCK);
 		// Place mines
     gamestate.tiles[x][y].is_mine = true;
 		printf("Placing mine at %d/%d\n", x, y);
