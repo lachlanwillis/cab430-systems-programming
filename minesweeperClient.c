@@ -184,7 +184,7 @@ void ShowLeaderboard(int serverSocket){
   printf("BEST TIME");
   gotoxy(40, 4);
   printf("GAMES WON / TOTAL PLAYED\n");
-  printf("===========================================================================\n\n\n");
+  printf("===========================================================================\n\n");
 
   int shortRetval = -1;
 
@@ -195,14 +195,14 @@ void ShowLeaderboard(int serverSocket){
   for (int i = 0; i < LEADERBOARD_SIZE; i++) {
     if (leaderboard[i].username[0] != '\0') {
       printf("%s", leaderboard[i].username);
-      gotoxy(20, 6 + i);
+      gotoxy(20, 8 + i);
       printf("%d seconds", leaderboard[i].time);
-      gotoxy(40, 6 + i);
+      gotoxy(40, 8 + i);
       printf("%d games won, ", leaderboard[i].won);
       printf("%d games played\n", leaderboard[i].played);
     }
   }
-  printf("\n\n===========================================================================\n");
+  printf("\n===========================================================================\n");
 }
 
 // Start Playing the game Minesweeper
@@ -262,7 +262,7 @@ void PlayMinesweeper(int serverSocket){
           system("clear");
 
           DrawGame(gameString);
-          fprintf(stderr, "\nMine Hit! Game Over!\n\n");
+          fprintf(stderr, "\nGame Over! You hit a mine.\n\n");
           playingGame = 0;
         }
 
@@ -273,6 +273,26 @@ void PlayMinesweeper(int serverSocket){
         sprintf(coordsChar, "%d", coords);
 
         SendGameChoice(serverSocket, "p", coords);
+
+        if (flagMessage[1] == '1') {
+          // We have won!
+          int time_total = 0;
+          
+          // Send username and receive total seconds taken
+          read(serverSocket, &time_total, sizeof(int)*MAXDATASIZE);
+          SendData(serverSocket, username, sizeof username);
+
+          // Update gamestate
+          ReceiveGameState(serverSocket, gameString);
+          system("clear");
+          DrawGame(gameString);
+
+          // Post message
+          fprintf(stderr, "\nCongradulations! You have located all the mines.\n");
+          fprintf(stderr, "You won in %d seconds!\n\n", time_total);
+          playingGame = 0;
+        }
+
         ReceiveData(serverSocket, flagMessage, MAXDATASIZE);
 
         flagOption = true;

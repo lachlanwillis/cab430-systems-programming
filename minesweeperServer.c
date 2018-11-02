@@ -43,7 +43,7 @@ void MinesweeperMenu(int socket_id){
 	// Create GameState
   struct GameState gamestate;
 	int shortRetval = -1, res;
-	char gameString[MAXGAMESIZE], clientReq[MAXDATASIZE], chosenOption[8];
+	char gameString[MAXGAMESIZE], chosenOption[8];
 
 	// Place mines
 	printf("Placing Mines\n");
@@ -390,6 +390,7 @@ void FlagTile(struct GameState *gameState, int loc_x, int loc_y, int socket_id) 
 			// WE WIN! Stop timer, send message and time
 			end_time = time(NULL);
 			int seconds_taken = difftime(start_time, end_time);
+			write(socket_id, &seconds_taken, sizeof(seconds_taken));
 
 			// Send win notification and time to client
 			flagMessage[1] = '1';
