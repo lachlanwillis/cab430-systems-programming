@@ -12,8 +12,6 @@
 #define NUM_TILES_Y 9
 #define NUM_MINES 10
 
-#define RANDOM_NUM_SEED 42
-
 #define MAXGAMESIZE 83
 #define TOTAL_CONNECTIONS 10
 #define MAXDATASIZE 256
@@ -40,9 +38,6 @@ time_t start_time, end_time;
 void MinesweeperMenu(int socket_id){
 	// Start timer
 	start_time = time(NULL);
-
-	// Seed the random number
-	srand(RANDOM_NUM_SEED);
 
 	// Create GameState
   struct GameState gamestate;
@@ -140,13 +135,18 @@ struct GameState PlaceMines(){
   }
 
 	for (int i = 0; i < NUM_MINES; i++) {
+		// Set mine locations
 		int x, y;
 		do {
 			x = rand() % NUM_TILES_X;
 			y = rand() % NUM_TILES_Y;
-		} while (TileContainsMine(x,y, gamestate));
+		} while (TileContainsMine(x, y, gamestate));
+
+		// Place mines
     gamestate.tiles[x][y].is_mine = true;
 		printf("Placing mine at %d/%d\n", x, y);
+
+		// Set adjacent mines
 		for(int a = -1; a < 2; a++){
 			for (int b = -1; b < 2; b++){
 				if((a + x > -1) && (a + x < NUM_TILES_X)){

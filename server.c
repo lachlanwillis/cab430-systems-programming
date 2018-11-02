@@ -26,6 +26,7 @@
 
 #define TOTAL_CONNECTIONS 10
 #define MAXDATASIZE 256
+#define RANDOM_NUM_SEED 42
 
 // Setup leaderboard array
 struct LeaderboardEntry leaderboard[TOTAL_CONNECTIONS];
@@ -46,6 +47,9 @@ pthread_t client_thread;
 pthread_attr_t attr;
 
 int main(int argc, char* argv[]) {
+	// Seed the random number
+	srand(RANDOM_NUM_SEED);
+
 	// Setup Handle Exit Signal
 	signal(SIGINT, HandleExitSignal);
 
