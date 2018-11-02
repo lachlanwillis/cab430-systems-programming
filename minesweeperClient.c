@@ -319,10 +319,11 @@ void PlayMinesweeper(int serverSocket){
           fprintf(stderr, "\nCongratulations! You have located all the mines.\n");
           fprintf(stderr, "You won in %d seconds!\n\n", time_total);
           playingGame = 0;
-        } else {
-          // Tile already flipped
-          fprintf(stderr, "\nTile already flipped, pick another.\n\n");
         }
+
+        // ReceiveGameState(serverSocket, gameString);
+        // system("clear");
+        DrawGame(gameString);
 
         flagOption = true;
 				enteringOption = 0;
