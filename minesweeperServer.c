@@ -19,6 +19,8 @@
 #define LOCK 1
 #define UNLOCK 0
 
+#define ERROR -1
+
 // Define what a tile is
 typedef struct Tile{
 	bool flag_placed;
@@ -77,10 +79,16 @@ void MinesweeperMenu(int socket_id){
 
 		// Send gamestate
 		printf("Sending gamestate\n");
-		shortRetval = SendData(socket_id, gameString, sizeof gameString);
+		if ((shortRetval = SendData(socket_id, gameString, sizeof gameString)) <= 0) {
+			close(socket_id);
+			return;
+		}
 
 		// Wait for chosen option from client
-    shortRetval = ReceiveData(socket_id, chosenOption, 8);
+    if ((shortRetval = ReceiveData(socket_id, chosenOption, 8)) <= 0) {
+			close(socket_id);
+			return;
+		}
 
     printf("Received Data: %s", chosenOption);
     printf("\n");
@@ -108,7 +116,10 @@ void MinesweeperMenu(int socket_id){
 	FormatGameState(gamestate, gameString);
 	// Send gamestate
 	printf("Sending gamestate\n");
-	shortRetval = SendData(socket_id, gameString, sizeof gameString);
+	if ((shortRetval = SendData(socket_id, gameString, sizeof gameString)) <= 0) {
+		close(socket_id);
+		return;
+	}
 }
 
 // Generic Receive Data function
@@ -116,8 +127,8 @@ int ReceiveData(int serverSocket, char* message, short messageSize) {
   int shortRetval = -1;
 
   if ((shortRetval = recv(serverSocket, message, messageSize, 0)) <= 0 ) {
-    perror("recv");
-    exit(1);
+    close(serverSocket);
+		return(ERROR);
   }
   // message[1]='\0';
   return shortRetval;
@@ -127,9 +138,9 @@ int ReceiveData(int serverSocket, char* message, short messageSize) {
 int SendData(int serverSocket, char* message, short messageSize) {
   int shortRetval = -1;
 
-  if ((shortRetval = send(serverSocket, message, messageSize, 0)) == -1) {
-    perror("send");
-		exit(1);
+  if ((shortRetval = send(serverSocket, message, messageSize, 0)) <= 0) {
+    close(serverSocket);
+		return(ERROR);
   }
   return shortRetval;
 }
@@ -310,7 +321,7 @@ void SortLeaderboard(struct LeaderboardEntry *leaderboard) {
 
 // Function formats the leaderboard and sends it to the client
 void SendLeaderboard(int socket) {
-	int time_count, won, played;
+	int time_count, won, played, shortRetval = -1;
 	char username[MAXDATASIZE];
 
 	SortLeaderboard(leaderboard);
@@ -322,7 +333,10 @@ void SendLeaderboard(int socket) {
 		played = htonl(leaderboard[i].played);
 		strcpy(username, leaderboard[i].username);
 
-		SendData(socket, username, sizeof username);
+		if ((shortRetval = SendData(socket, username, sizeof username)) <= 0) {
+			close(socket);
+			return;
+		}
 		write(socket, &time_count, sizeof(time_count));
 		write(socket, &won, sizeof(won));
 		write(socket, &played, sizeof(played));
@@ -331,7 +345,7 @@ void SendLeaderboard(int socket) {
 
 // Flip the tile requested by the client
 void FlipTile(struct GameState *gameState, int loc_x, int loc_y, int socket_id) {
-	int x_tile, y_tile;
+	int x_tile, y_tile, shortRetval = -1;
 	x_tile = loc_x;
 	y_tile = loc_y;
 
@@ -346,7 +360,10 @@ void FlipTile(struct GameState *gameState, int loc_x, int loc_y, int socket_id) 
 			gameState->GameOver = true;
 
 			flipMessage[0] = '1';
-			SendData(socket_id, flipMessage, sizeof flipMessage);
+			if ((shortRetval = SendData(socket_id, flipMessage, sizeof flipMessage)) <= 0) {
+				close(socket_id);
+				return;
+			}
 
 			end_time = time(NULL);
 			int seconds_taken = difftime(end_time, start_time);
@@ -368,7 +385,10 @@ void FlipTile(struct GameState *gameState, int loc_x, int loc_y, int socket_id) 
 		printf("Flipped Tile %d/%d\n", x_tile, y_tile);
 
 			flipMessage[0] = '0';
-			SendData(socket_id, flipMessage, sizeof flipMessage);
+			if ((shortRetval = SendData(socket_id, flipMessage, sizeof flipMessage)) <= 0) {
+				close(socket_id);
+				return;
+			}
 
 			// If tile has 0 adjacent mines, flip surrounding 8 neighbours
 			if (gameState->tiles[x_tile][y_tile].adjacent_mines == 0) {
@@ -401,6 +421,7 @@ void FlipSurrounds(struct GameState *gameState, int loc_x, int loc_y) {
 // Flag a tile, if a mine = success, if not = inform client / display message
 void FlagTile(struct GameState *gameState, int loc_x, int loc_y, int socket_id) {
 	char flagMessage[2];
+	int shortRetval = -1;
 
 	// Check to see if tile is mine
 	if (gameState->tiles[loc_x][loc_y].is_mine == true) {
@@ -437,14 +458,21 @@ void FlagTile(struct GameState *gameState, int loc_x, int loc_y, int socket_id) 
 	}
 
 	// Send status to user
-	SendData(socket_id, flagMessage, sizeof flagMessage);
+	if ((shortRetval = SendData(socket_id, flagMessage, sizeof flagMessage)) <= 0) {
+		close(socket_id);
+		return;
+	}
 }
 
 void GameOverMsg(int socket_id, int time, bool won){
 	char message[MAXDATASIZE];
+	int shortRetval = -1;
 
 	// Get username
-	ReceiveData(socket_id, message, MAXDATASIZE);
+	if ((shortRetval = ReceiveData(socket_id, message, MAXDATASIZE)) <= 0) {
+		close(socket_id);
+		return;
+	}
 
 	if (won) {
 		// Send Congrats

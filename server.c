@@ -29,6 +29,8 @@
 #define RANDOM_NUM_SEED 42
 #define THREAD_POOL_SIZE 10
 
+#define ERROR -1
+
 // Setup leaderboard array
 struct LeaderboardEntry leaderboard[TOTAL_CONNECTIONS];
 
@@ -269,7 +271,10 @@ void ClientConnectionsHandler(struct Request *request, int socket_id) {
 
 		memset(message,0,sizeof(message));
 
-		read_size = ReceiveData(request->sockfd, message, MAXDATASIZE);
+		if ((read_size = ReceiveData(request->sockfd, message, MAXDATASIZE)) <= 0) {
+			close(socket_id);
+			return;
+		}
 
 		fprintf(stderr, "Received username: %s\n", message);
 		for(int i = 1; i < 12; i++){
@@ -281,7 +286,10 @@ void ClientConnectionsHandler(struct Request *request, int socket_id) {
 		memset(message,0,sizeof(message));
 
 		// Receive password
-		read_size = ReceiveData(request->sockfd, message, MAXDATASIZE);
+		if ((read_size = ReceiveData(request->sockfd, message, MAXDATASIZE)) <= 0) {
+			close(socket_id);
+			return;
+		}
 
 		fprintf(stderr, "Received password: %s\n", message);
 		int resMes = -1;
@@ -296,7 +304,10 @@ void ClientConnectionsHandler(struct Request *request, int socket_id) {
 			strcpy(message, "");
 			strcpy(loginMessage, "0");
 		}
-		resMes = SendData(request->sockfd, message, MAXDATASIZE);
+		if ((resMes = SendData(request->sockfd, message, MAXDATASIZE)) <= 0) {
+			close(socket_id);
+			return;
+		}
 
 	}
 
@@ -305,7 +316,10 @@ void ClientConnectionsHandler(struct Request *request, int socket_id) {
 
 	int clientFinished = 0;
 	while(clientFinished != 1){
-		ReceiveData(request->sockfd, message, MAXDATASIZE);
+		if ((read_size = ReceiveData(request->sockfd, message, MAXDATASIZE)) <= 0) {
+			close(socket_id);
+			return;
+		}
 
 		if (strcmp("1", message) == 0){
 	    // Start Minesweeper
