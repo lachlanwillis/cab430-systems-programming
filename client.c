@@ -62,7 +62,7 @@ int main(int argc, char* argv[]){
   StartMinesweeper(clientConnect);
 
   // Close connection
-  printf("Closing client connection.");
+  printf("Closing client connection.\n");
   close(clientConnect);
   exit(1);
   return 1;

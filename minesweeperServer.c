@@ -352,7 +352,6 @@ void FlipTile(struct GameState *gameState, int loc_x, int loc_y, int socket_id) 
 
 	char flipMessage[1];
 
-
 	// Check to see if tile is a mine
 	if (gameState->tiles[x_tile][y_tile].revealed == false) {
 		if (gameState->tiles[x_tile][y_tile].is_mine == true) {
@@ -361,6 +360,7 @@ void FlipTile(struct GameState *gameState, int loc_x, int loc_y, int socket_id) 
 			gameState->GameOver = true;
 
 			flipMessage[0] = '1';
+
 			if ((shortRetval = SendData(socket_id, flipMessage, sizeof flipMessage)) <= 0) {
 				close(socket_id);
 				return;
@@ -371,25 +371,21 @@ void FlipTile(struct GameState *gameState, int loc_x, int loc_y, int socket_id) 
 
 			GameOverMsg(socket_id, seconds_taken, false);
 
-		for(int x = 0; x < NUM_TILES_X; x++){
-			for (int y = 0; y < NUM_TILES_Y; y++){
-				if (gameState->tiles[x][y].is_mine == true){
-					gameState->tiles[x][y].revealed = true;
-				} else {
-					gameState->tiles[x][y].revealed = false;
+			for(int x = 0; x < NUM_TILES_X; x++){
+				for (int y = 0; y < NUM_TILES_Y; y++){
+					if (gameState->tiles[x][y].is_mine == true){
+						gameState->tiles[x][y].revealed = true;
+					} else {
+						gameState->tiles[x][y].revealed = false;
+					}
 				}
 			}
-		}
-	} else {
-		// If tile is not a mine - flip the tile, to reveal number below
-		gameState->tiles[x_tile][y_tile].revealed = true;
-		printf("Flipped Tile %d/%d\n", x_tile, y_tile);
+		} else {
+			// If tile is not a mine - flip the tile, to reveal number below
+			gameState->tiles[x_tile][y_tile].revealed = true;
+			printf("Flipped Tile %d/%d\n", x_tile, y_tile);
 
 			flipMessage[0] = '0';
-			if ((shortRetval = SendData(socket_id, flipMessage, sizeof flipMessage)) <= 0) {
-				close(socket_id);
-				return;
-			}
 
 			// If tile has 0 adjacent mines, flip surrounding 8 neighbours
 			if (gameState->tiles[x_tile][y_tile].adjacent_mines == 0) {
@@ -398,6 +394,10 @@ void FlipTile(struct GameState *gameState, int loc_x, int loc_y, int socket_id) 
 		}
 	} else {
 		flipMessage[0] = '2';
+		if ((shortRetval = SendData(socket_id, flipMessage, sizeof flipMessage)) <= 0) {
+			close(socket_id);
+			return;
+		}
 	}
 }
 
@@ -424,44 +424,59 @@ void FlagTile(struct GameState *gameState, int loc_x, int loc_y, int socket_id) 
 	char flagMessage[2];
 	int shortRetval = -1;
 
-	// Check to see if tile is mine
-	if (gameState->tiles[loc_x][loc_y].is_mine == true) {
-		// Flag placed successfully
-		printf("Flag Placed! Mine at %d/%d\n", loc_x, loc_y);
+	if (gameState->tiles[loc_x][loc_y].revealed == false) {
+		// Check to see if tile is mine
+		if (gameState->tiles[loc_x][loc_y].is_mine == true) {
+			// Flag placed successfully
+			printf("Flag Placed! Mine at %d/%d\n", loc_x, loc_y);
 
-		flagMessage[0] = '1';
+			flagMessage[0] = '1';
 
-		gameState->tiles[loc_x][loc_y].revealed = true;
-		gameState->tiles[loc_x][loc_y].flag_placed = true;
-		gameState->minesLeft = gameState->minesLeft - 1;
+			gameState->tiles[loc_x][loc_y].revealed = true;
+			gameState->tiles[loc_x][loc_y].flag_placed = true;
+			gameState->minesLeft = gameState->minesLeft - 1;
 
-		printf("Mines left: %d\n", gameState->minesLeft);
+			printf("Mines left: %d\n", gameState->minesLeft);
 
-		// Successfully placed a flag - Check for win state
-		if (gameState->minesLeft == 0) {
-			// WE WIN! Stop timer, send message and time
-			end_time = time(NULL);
-			int seconds_taken = difftime(start_time, end_time);
-			write(socket_id, &seconds_taken, sizeof(seconds_taken));
+			// Successfully placed a flag - Check for win state
+			if (gameState->minesLeft == 0) {
+				// WE WIN! Stop timer, send message and time
+				// Send win notification and time to client
+				flagMessage[1] = '1';
 
-			// Send win notification and time to client
-			flagMessage[1] = '1';
-			GameOverMsg(socket_id, seconds_taken, true);
+				if ((shortRetval = SendData(socket_id, flagMessage, sizeof flagMessage)) <= 0) {
+					close(socket_id);
+					return;
+				}
+
+				// Handle time
+				end_time = time(NULL);
+				int seconds_taken = difftime(start_time, end_time);
+				write(socket_id, &seconds_taken, sizeof(seconds_taken));
+
+				GameOverMsg(socket_id, seconds_taken, true);
+			} else {
+				// More mines are remaining
+				flagMessage[1] = '0';
+
+				if ((shortRetval = SendData(socket_id, flagMessage, sizeof flagMessage)) <= 0) {
+					close(socket_id);
+					return;
+				}
+			}
 		} else {
-			// More mines are remaining
-			flagMessage[1] = '0';
+			// No mine at loc, flag not placed
+			printf("No mine at: %d, %d\n", loc_x, loc_y);
+
+			flagMessage[0] = '0';
 		}
 	} else {
-		// No mine at loc, flag not placed
-		printf("No mine at: %d, %d\n", loc_x, loc_y);
-
-		flagMessage[0] = '0';
-	}
-
-	// Send status to user
-	if ((shortRetval = SendData(socket_id, flagMessage, sizeof flagMessage)) <= 0) {
-		close(socket_id);
-		return;
+		// Tile already revealed
+		flagMessage[0] = '2';
+		if ((shortRetval = SendData(socket_id, flagMessage, sizeof flagMessage)) <= 0) {
+			close(socket_id);
+			return;
+		}
 	}
 }
 

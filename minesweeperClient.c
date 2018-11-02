@@ -264,12 +264,7 @@ void PlayMinesweeper(int serverSocket){
         SendGameChoice(serverSocket, "r", coords);
         ReceiveData(serverSocket, flipMessage, MAXDATASIZE);
 
-        if (flipMessage[0] == '0') {
-          // No mine hit :)
-        } else if (flipMessage[0] == '2') {
-          // Tile already flipped
-          fprintf(stderr, "\nTile already flipped, pick another.\n\n");
-        } else {
+        if (flipMessage[0] == '1') {
           // Hit mine, game over :(
           SendData(serverSocket, username, sizeof username);
           ReceiveGameState(serverSocket, gameString);
@@ -278,6 +273,9 @@ void PlayMinesweeper(int serverSocket){
           DrawGame(gameString);
           fprintf(stderr, "\nGame Over! You hit a mine.\n\n");
           playingGame = 0;
+        } else if (flipMessage[0] == '2') {
+          // Tile already flipped
+          fprintf(stderr, "\nTile already flipped, pick another.\n\n");
         }
 
 				enteringOption = 0;
@@ -287,6 +285,7 @@ void PlayMinesweeper(int serverSocket){
         sprintf(coordsChar, "%d", coords);
 
         SendGameChoice(serverSocket, "p", coords);
+        ReceiveData(serverSocket, flagMessage, MAXDATASIZE);
 
         if (flagMessage[1] == '1') {
           // We have won!
@@ -305,9 +304,10 @@ void PlayMinesweeper(int serverSocket){
           fprintf(stderr, "\nCongradulations! You have located all the mines.\n");
           fprintf(stderr, "You won in %d seconds!\n\n", time_total);
           playingGame = 0;
+        } else {
+          // Tile already flipped
+          fprintf(stderr, "\nTile already flipped, pick another.\n\n");
         }
-
-        ReceiveData(serverSocket, flagMessage, MAXDATASIZE);
 
         flagOption = true;
 				enteringOption = 0;
