@@ -331,8 +331,8 @@ void FlipTile(struct GameState *gameState, int loc_x, int loc_y, int socket_id) 
 
 
 	// Check to see if tile is a mine
-	if ((*gameState).tiles[x_tile][y_tile].revealed == false) {
-		if ((*gameState).tiles[x_tile][y_tile].is_mine == true) {
+	if (gameState->tiles[x_tile][y_tile].revealed == false) {
+		if (gameState->tiles[x_tile][y_tile].is_mine == true) {
 			// Game Over
 			printf("Game Over: Mine at %d/%d\n", x_tile, y_tile);
 			(*gameState).GameOver = true;
