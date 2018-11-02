@@ -177,6 +177,9 @@ void gotoxy(int x, int y) {
 
 // Displays the Leaderboard - Requires Communication to Server
 void ShowLeaderboard(int serverSocket){
+  // Vars to check if any leaderboard entries
+  bool hasEntry = false;
+
   printf("===========================================================================\n");
   printf("Current Minesweeper Leaderboard\n");
   printf("===========================================================================\n");
@@ -195,15 +198,22 @@ void ShowLeaderboard(int serverSocket){
   // Show the leaderboard
   for (int i = 0; i < LEADERBOARD_SIZE; i++) {
     if (leaderboard[i].username[0] != '\0') {
+      hasEntry = true;
+
       printf("%s", leaderboard[i].username);
-      gotoxy(20, 8 + i);
+      gotoxy(20, 7 + i);
       printf("%d seconds", leaderboard[i].time);
-      gotoxy(40, 8 + i);
+      gotoxy(40, 7 + i);
       printf("%d games won, ", leaderboard[i].won);
       printf("%d games played\n", leaderboard[i].played);
     }
   }
-  printf("\n===========================================================================\n");
+
+  if (!hasEntry) {
+    // No entries, display message
+    printf("There is no info currently stored in the leaderboard. Try again later.\n");
+  }
+  printf("\n===========================================================================\n\n");
 }
 
 // Start Playing the game Minesweeper
@@ -246,7 +256,7 @@ void PlayMinesweeper(int serverSocket){
 
       scanf("%s", selectionOption);
 
-      if (strcmp("r", selectionOption) == 0){
+      if (strcmp("R", selectionOption) == 0){
         // User chose to reveal a tile
 				coords = GetTileCoordinates();
         sprintf(coordsChar, "%d", coords);
@@ -256,6 +266,9 @@ void PlayMinesweeper(int serverSocket){
 
         if (flipMessage[0] == '0') {
           // No mine hit :)
+        } else if (flipMessage[0] == '2') {
+          // Tile already flipped
+          fprintf(stderr, "\nTile already flipped, pick another.\n\n");
         } else {
           // Hit mine, game over :(
           SendData(serverSocket, username, sizeof username);
@@ -268,7 +281,7 @@ void PlayMinesweeper(int serverSocket){
         }
 
 				enteringOption = 0;
-      } else if (strcmp("p", selectionOption) == 0){
+      } else if (strcmp("P", selectionOption) == 0){
         // User chose to place a flag
         coords = GetTileCoordinates();
         sprintf(coordsChar, "%d", coords);
@@ -298,7 +311,7 @@ void PlayMinesweeper(int serverSocket){
 
         flagOption = true;
 				enteringOption = 0;
-      } else if (strcmp("q", selectionOption) == 0){
+      } else if (strcmp("Q", selectionOption) == 0){
         // User chose to quit
         playingGame = 0;
 
@@ -310,7 +323,10 @@ void PlayMinesweeper(int serverSocket){
         fprintf(stderr, "User quit game successfully.\n\n");
         return;
       } else {
-        printf("Did not enter Options R, P or Q.\n Please try again\n");
+        system("clear");
+
+        DrawGame(gameString);
+        fprintf(stderr, "\nDid not enter Options R, P or Q.\nPlease try again\n");
       }
     }
   } while(playingGame);
